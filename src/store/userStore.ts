@@ -38,6 +38,7 @@ interface UserState {
   toggleQuest: (id: string) => void;
   toggleTheme: () => void;
   savePlan: (plan: GeneratedPlan | null) => void;
+  updateProfile: (name: string, age: number | null, playerClass: string) => void;
 }
 
 const generateDailyQuests = (): Quest[] => [
@@ -72,6 +73,7 @@ export const useUserStore = create<UserState>()(
       theme: 'default',
       savedPlan: null,
       registerUser: (name, age, playerClass) => set({ isRegistered: true, name, age, playerClass }),
+      updateProfile: (name, age, playerClass) => set({ name, age, playerClass }),
       savePlan: (plan) => set({ savedPlan: plan }),
       gainXp: (amount) =>
         set((state) => {
