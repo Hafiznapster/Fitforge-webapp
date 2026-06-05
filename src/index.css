@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --theme-primary: 74 158 255;
+    --theme-primary-dim: 26 74 138;
+    --theme-primary-glow: rgba(74,158,255,0.15);
+  }
+
+  body {
+    @apply bg-sl-bg text-sl-text-mid font-inter antialiased min-h-screen overflow-x-hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-rajdhani text-white uppercase tracking-widest;
+  }
+
+  .theme-s-rank {
+    --theme-primary: 240 192 64;
+    --theme-primary-dim: 122 90 16;
+    --theme-primary-glow: rgba(240,192,64,0.15);
+  }
+}
+
+@layer components {
+  /* Common UI components from the plan */
+  .header-badge {
+    @apply inline-block font-share text-[11px] text-sl-blue tracking-[3px] border border-sl-border-strong px-4 py-1 mb-4 bg-sl-blue/5;
+  }
+  
+  .section-title {
+    @apply flex items-center gap-3 mb-4 mt-8;
+  }
+  .section-title .num {
+    @apply font-share text-[10px] text-sl-blue tracking-widest;
+  }
+  .section-title h2 {
+    @apply text-base font-bold tracking-[2px] uppercase text-[#d0ddf5];
+  }
+  .section-title .line {
+    @apply flex-1 h-[1px] bg-sl-border;
+  }
+
+  .card-tag {
+    @apply inline-block mt-2 font-share text-[10px] px-2 py-0.5 border tracking-widest;
+  }
+}
+
+/* Custom Scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: theme('colors.sl.bg');
+}
+::-webkit-scrollbar-thumb {
+  background: theme('colors.sl.surface2');
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.sl.text-dim');
+}

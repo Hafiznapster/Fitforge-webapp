@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #05070f;
+    color: #c8d4e8;
+    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  :root {
+    --blue: #4a9eff;
+    --blue-dim: #1a4a8a;
+    --blue-glow: rgba(74,158,255,0.15);
+    --purple: #9b6dff;
+    --purple-dim: #3d1a8a;
+    --gold: #f0c040;
+    --gold-dim: #7a5a10;
+    --teal: #30d5c8;
+    --red: #ff4a6a;
+    --surface: #0b0f1e;
+    --surface2: #111827;
+    --border: rgba(74,158,255,0.2);
+    --border-strong: rgba(74,158,255,0.4);
+    --text-dim: #6a7a9a;
+    --text-mid: #8a9ab8;
+  }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 40px 0 32px;
+    position: relative;
+  }
+  .header-badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    letter-spacing: 3px;
+    border: 1px solid var(--border-strong);
+    padding: 4px 14px;
+    margin-bottom: 16px;
+    background: rgba(74,158,255,0.06);
+  }
+  .header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #e8f0ff;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .header h1 span { color: var(--blue); }
+  .header-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+    margin: 24px 0;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 18px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--blue);
+    border-bottom-color: var(--blue);
+  }
+  .tab:hover:not(.active) { color: var(--text-mid); }
+
+  /* ── Section titles ── */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    margin-top: 28px;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .section-title .num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--blue);
+    letter-spacing: 1px;
+  }
+  .section-title h2 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #d0ddf5;
+  }
+  .section-title .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Feature cards ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .feature-card.blue::before { background: var(--blue); }
+  .feature-card.purple::before { background: var(--purple); }
+  .feature-card.gold::before { background: var(--gold); }
+  .feature-card.teal::before { background: var(--teal); }
+  .feature-card.red::before { background: var(--red); }
+  .feature-card:hover { border-color: var(--border-strong); background: var(--surface2); }
+
+  .card-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: #e0eaff;
+  }
+  .card-title.blue { color: var(--blue); }
+  .card-title.purple { color: var(--purple); }
+  .card-title.gold { color: var(--gold); }
+  .card-title.teal { color: var(--teal); }
+  .card-title.red { color: var(--red); }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.5;
+  }
+  .card-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border: 1px solid;
+    letter-spacing: 1px;
+  }
+  .card-tag.ai { color: var(--purple); border-color: var(--purple-dim); background: rgba(155,109,255,0.06); }
+  .card-tag.db { color: var(--teal); border-color: rgba(48,213,200,0.3); background: rgba(48,213,200,0.06); }
+  .card-tag.ui { color: var(--gold); border-color: var(--gold-dim); background: rgba(240,192,64,0.06); }
+
+  /* ── Stack table ── */
+  .stack-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .stack-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    text-align: left;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stack-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(74,158,255,0.08);
+    vertical-align: top;
+  }
+  .stack-table tr:last-child td { border-bottom: none; }
+  .stack-table td:first-child {
+    font-weight: 600;
+    color: var(--blue);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    width: 140px;
+  }
+  .stack-table td:nth-child(2) { color: #c0cce0; }
+  .stack-table td:last-child { color: var(--text-dim); font-size: 12px; }
+
+  /* ── Phase block ── */
+  .phase-block {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: rgba(74,158,255,0.04);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+  .phase-header:hover { background: rgba(74,158,255,0.08); }
+  .phase-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    background: rgba(74,158,255,0.1);
+    border: 1px solid var(--border-strong);
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+  .phase-title { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: #dde8ff; flex: 1; }
+  .phase-weeks { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .phase-chevron { color: var(--text-dim); font-size: 12px; transition: transform 0.2s; }
+  .phase-block.open .phase-chevron { transform: rotate(180deg); }
+  .phase-body {
+    display: none;
+    padding: 16px;
+  }
+  .phase-block.open .phase-body { display: block; }
+  .phase-tasks { list-style: none; }
+  .phase-tasks li {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-mid);
+    border-bottom: 1px solid rgba(74,158,255,0.06);
+  }
+  .phase-tasks li:last-child { border-bottom: none; }
+  .phase-tasks li::before {
+    content: '▸';
+    color: var(--blue);
+    font-size: 11px;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ── AI model card ── */
+  .model-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .model-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .model-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .model-role {
+    font-size: 13px;
+    font-weight: 700;
+    color: #dde8ff;
+    margin-bottom: 6px;
+  }
+  .model-tasks { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+
+  /* ── Schema ── */
+  .schema-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 12px;
+  }
+  .schema-table thead th {
+    background: rgba(74,158,255,0.08);
+    color: var(--blue);
+    font-size: 10px;
+    letter-spacing: 2px;
+    padding: 6px 10px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  .schema-table td {
+    padding: 6px 10px;
+    border: 1px solid rgba(74,158,255,0.1);
+    color: var(--text-mid);
+  }
+  .schema-table td:first-child { color: var(--teal); }
+  .schema-table td:nth-child(2) { color: var(--purple); }
+  .pk { color: var(--gold) !important; }
+  .fk { color: var(--red) !important; }
+
+  /* ── UI Screens list ── */
+  .screen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .screen-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+  }
+  .screen-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #dde8ff;
+    margin-bottom: 4px;
+  }
+  .screen-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  /* ── Info box ── */
+  .info-box {
+    background: rgba(74,158,255,0.05);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+  .info-box.gold { border-left-color: var(--gold); background: rgba(240,192,64,0.04); }
+  .info-box.purple { border-left-color: var(--purple); background: rgba(155,109,255,0.04); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">SYSTEM ARCHITECTURE v1.0</div>
+    <h1>FIT<span>FORGE</span></h1>
+    <div class="header-sub">ARISE · TRAIN · ASCEND</div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview')">Overview</button>
+    <button class="tab" onclick="showTab('features')">Features</button>
+    <button class="tab" onclick="showTab('stack')">Tech Stack</button>
+    <button class="tab" onclick="showTab('ai')">AI Layer</button>
+    <button class="tab" onclick="showTab('database')">Database</button>
+    <button class="tab" onclick="showTab('roadmap')">Roadmap</button>
+    <button class="tab" onclick="showTab('screens')">UI Screens</button>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="tab-content active">
+    <div class="info-box gold">
+      <strong style="color:var(--gold)">SYSTEM CONCEPT</strong><br>
+      FitForge is a Solo Leveling–themed personal fitness web app that treats every workout like a dungeon raid. You gain XP, level up, track your "hunter stats", and get AI-coached by an adaptive system that knows your fatigue, volume, and progress. The dark UI, rank badges, and stat screens are designed to keep you locked in.
+    </div>
+
+    <div class="section-title">
+      <span class="num">001</span><h2>Core Philosophy</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card blue">
+        <div class="card-title blue">Hunter System</div>
+        <div class="card-desc">Every user is a Hunter. You gain XP per workout, level up (E→D→C→B→A→S), unlock rank badges and cosmetic themes as you progress.</div>
+        <span class="card-tag ui">GAMIFICATION</span>
+      </div>
+      <div class="feature-card purple">
+        <div class="card-title purple">AI Shadow Coach</div>
+        <div class="card-desc">Powered by Gemini Pro for plan generation and Groq/LLaMA 3 for real-time chat. The coach analyzes your Fitness, Fatigue, and Form scores — just like the PDF architecture.</div>
+        <span class="card-tag ai">AI-POWERED</span>
+      </div>
+      <div class="feature-card gold">
+        <div class="card-title gold">Readiness Gate</div>
+        <div class="card-desc">Before each session, the system checks your Fitness score (6-week volume load) vs Fatigue score (7-day RPE+volume). If overloaded, it gates you into a deload.</div>
+        <span class="card-tag db">SUPABASE</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">002</span><h2>What Makes It Unique</h2><div class="line"></div>
+    </div>
+    <div class="info-box">
+      Unlike generic fitness apps, FitForge is <strong style="color:#e0eaff">built for resistance training specifically</strong> — Push/Pull/Legs, progressive overload, RPE tracking, and hypertrophy-focused metrics. The AI doesn't give generic advice; it reads your actual logged sets and weights from Supabase to personalize everything.
+    </div>
+    <div class="info-box purple">
+      The Solo Leveling aesthetic isn't just cosmetic — it's a motivational system. Seeing your rank go from E → D → C feels real because it's tied to actual workout data: total volume lifted, consistency streak, PRs broken.
+    </div>
+  </div>
+
+  <!-- FEATURES TAB -->
+  <div id="tab-features" class="tab-content">
+    <div class="section-title">
+      <span class="num">01</span><h2>Workout System</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card blue">
+        <div class="card-title blue">AI Plan Generator</div>
+        <div class="card-desc">Gemini 1.5 Pro generates a full 4-week PPL block based on your readiness metrics injected into the system prompt. Returns structured JSON for week-by-week progressions.</div>
+        <span class="card-tag ai">GEMINI PRO</span>
+      </div>
+      <div class="feature-card purple">
+        <div class="card-title purple">Live Session Tracker</div>
+        <div class="card-desc">Log sets, reps, weight in real time. Timer between sets. RPE (Rate of Perceived Exertion) input per set. Auto-saves to Supabase on each log.</div>
+        <span class="card-tag db">SUPABASE RT</span>
+      </div>
+      <div class="feature-card teal">
+        <div class="card-title teal">Progressive Overload Engine</div>
+        <div class="card-desc">Compares this week's volume vs last week's. Warns if you're jumping >10% per exercise. Suggests deloads when 7-day fatigue exceeds threshold.</div>
+        <span class="card-tag ai">GROQ LLM</span>
+      </div>
+      <div class="feature-card gold">
+        <div class="card-title gold">Exercise Library</div>
+        <div class="card-desc">Built-in library of 200+ exercises with muscle group mapping, form cues, and substitutions. Filterable by muscle group, equipment, and difficulty.</div>
+        <span class="card-tag ui">FRONTEND</span>
+      </div>
+      <div class="feature-card red">
+        <div class="card-title red">PR Tracker</div>
+        <div class="card-desc">Automatically detects when you break a personal record on any lift. Triggers a Solo Leveling "skill awakened" animation and awards XP bonus.</div>
+        <span class="card-tag ui">GAMIFIED</span>
+      </div>
+      <div class="feature-card blue">
+        <div class="card-title blue">Workout Calendar</div>
+        <div class="card-desc">Full monthly calendar view showing planned vs completed workouts. Color-coded by muscle group (Push/Pull/Legs/Rest). Missed days marked as "Gate Closed".</div>
+        <span class="card-tag ui">CALENDAR</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">02</span><h2>Diet & Nutrition</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card gold">
+        <div class="card-title gold">Calorie Counter</div>
+        <div class="card-desc">Log meals with macro breakdown (protein, carbs, fat). Daily targets calculated from your goal (bulk/cut/maintain) and bodyweight. Visual ring progress per macro.</div>
+        <span class="card-tag db">SUPABASE</span>
+      </div>
+      <div class="feature-card teal">
+        <div class="card-title teal">AI Meal Advisor</div>
+        <div class="card-desc">Chat with Groq-powered coach: "I'm 40g protein short, what can I eat?" — it responds with specific meal suggestions based on your remaining macros for the day.</div>
+        <span class="card-tag ai">GROQ LLAMA3</span>
+      </div>
+      <div class="feature-card purple">
+        <div class="card-title purple">Bulk/Cut Tracker</div>
+        <div class="card-desc">Track current phase (bulk/cut/maintain). Body weight logs with rolling weekly average to filter daily fluctuations. Charts rate of gain/loss against target.</div>
+        <span class="card-tag ui">CHART.JS</span>
+      </div>
+      <div class="feature-card blue">
+        <div class="card-title blue">Water Intake Logger</div>
+        <div class="card-desc">Quick +250ml taps to log water. Daily target based on bodyweight. Visual fill animation (like a blue bar filling up). Hydration affects Readiness score.</div>
+        <span class="card-tag ui">GAMIFIED</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">03</span><h2>Hunter Stats & Gamification</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card gold">
+        <div class="card-title gold">Rank System</div>
+        <div class="card-desc">E → D → C → B → A → S → National Level Hunter. Rank unlocks visual themes, badge overlays, and new AI coach "personalities" (stricter at higher ranks).</div>
+        <span class="card-tag ui">GAMIFIED</span>
+      </div>
+      <div class="feature-card purple">
+        <div class="card-title purple">Stat Sheet</div>
+        <div class="card-desc">Solo Leveling–style attribute panel: STR (total volume), AGI (consistency %), VIT (recovery score), INT (form quality), LUK (streak days). Updated after every session.</div>
+        <span class="card-tag ui">VISUAL</span>
+      </div>
+      <div class="feature-card teal">
+        <div class="card-title teal">Daily Quests</div>
+        <div class="card-desc">AI generates 3 daily missions: "Hit 100g protein", "Complete chest session", "Log 2.5L water". Completing all 3 gives XP multiplier bonus.</div>
+        <span class="card-tag ai">GEMINI FLASH</span>
+      </div>
+      <div class="feature-card red">
+        <div class="card-title red">Streak System</div>
+        <div class="card-desc">Workout consistency streak tracker. Breaking streak shows "Gate Collapse" warning. Rest days don't break streak if pre-planned. Longest streak saved as record.</div>
+        <span class="card-tag ui">GAMIFIED</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">04</span><h2>Analytics & Recovery</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card blue">
+        <div class="card-title blue">Progress Analytics</div>
+        <div class="card-desc">Volume load trends per lift, 1RM estimations, muscle group balance radar chart, weekly tonnage bar charts. All from actual logged data.</div>
+        <span class="card-tag db">SUPABASE</span>
+      </div>
+      <div class="feature-card teal">
+        <div class="card-title teal">Recovery Dashboard</div>
+        <div class="card-desc">Fitness vs Fatigue vs Form (CTL/ATL/TSB model adapted for hypertrophy). Color-coded readiness: Green = go hard, Yellow = moderate, Red = deload.</div>
+        <span class="card-tag ai">COMPUTED</span>
+      </div>
+      <div class="feature-card purple">
+        <div class="card-title purple">Sleep & Stress Logger</div>
+        <div class="card-desc">Quick daily check-in: sleep hours + quality (1–5), stress level (1–5). Both factor into Fatigue score. Simple sliders, takes 10 seconds.</div>
+        <span class="card-tag ui">DAILY LOG</span>
+      </div>
+      <div class="feature-card gold">
+        <div class="card-title gold">Weekly AI Report</div>
+        <div class="card-desc">Every Monday, Gemini generates a personalized weekly summary: what went well, what to focus on, volume adjustments for the week. Push notification via browser.</div>
+        <span class="card-tag ai">GEMINI PRO</span>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">05</span><h2>AI Shadow Coach (Chat)</h2><div class="line"></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card purple">
+        <div class="card-title purple">RAG-Style Context</div>
+        <div class="card-desc">When you ask a question, the system first fetches your last 30 days of workout logs, current macros, and readiness score — then passes all of it as context to Groq LLaMA 3.</div>
+        <span class="card-tag ai">GROQ + DB</span>
+      </div>
+      <div class="feature-card blue">
+        <div class="card-title blue">Smart Suggestions</div>
+        <div class="card-desc">Coach proactively pings you: "Your bench is stalling — deload incoming", "Legs volume down 30% this week — prioritize tomorrow", "Protein avg 98g — needs attention".</div>
+        <span class="card-tag ai">PROACTIVE AI</span>
+      </div>
+      <div class="feature-card teal">
+        <div class="card-title teal">Form & Technique Tips</div>
+        <div class="card-desc">Ask about any exercise — the coach gives cue-based coaching, common mistakes, and muscle activation tips. Based on LLaMA 3 general fitness knowledge.</div>
+        <span class="card-tag ai">GROQ LLM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH STACK TAB -->
+  <div id="tab-stack" class="tab-content">
+    <div class="section-title">
+      <span class="num">001</span><h2>Technology Stack</h2><div class="line"></div>
+    </div>
+    <table class="stack-table">
+      <thead><tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>FRONTEND</td><td>React + Vite</td><td>Fast dev experience, good for real-time data; no SSR complexity needed for personal app</td></tr>
+        <tr><td>STYLING</td><td>Tailwind CSS</td><td>Rapid dark UI construction; easy to implement Solo Leveling aesthetic with custom config</td></tr>
+        <tr><td>STATE</td><td>Zustand</td><td>Lightweight global state for session data, user stats, and AI chat history</td></tr>
+        <tr><td>ROUTING</td><td>React Router v6</td><td>Client-side routing for dashboard, workout, diet, profile, stats pages</td></tr>
+        <tr><td>DATABASE</td><td>Supabase (PostgreSQL)</td><td>Free tier generous, real-time subscriptions, auth built-in, Row Level Security</td></tr>
+        <tr><td>AUTH</td><td>Supabase Auth</td><td>Magic link or Google OAuth; zero-cost, handles JWT automatically</td></tr>
+        <tr><td>AI — PLANS</td><td>Google Gemini 1.5 Pro</td><td>Large context window for injecting full user metrics; reliable JSON output mode</td></tr>
+        <tr><td>AI — CHAT</td><td>Groq (LLaMA 3 70B)</td><td>Ultra-fast inference, free tier, ideal for real-time coach chat responses</td></tr>
+        <tr><td>AI — DAILY</td><td>Gemini 1.5 Flash</td><td>Free tier, fast; used for daily quest generation and push notification content</td></tr>
+        <tr><td>CHARTS</td><td>Recharts</td><td>React-native charts; clean integration for volume/macro trend visualizations</td></tr>
+        <tr><td>ANIMATIONS</td><td>Framer Motion</td><td>Rank-up animations, XP bars, stat reveal effects (Solo Leveling "awakening" feel)</td></tr>
+        <tr><td>HOSTING</td><td>Cloudflare Pages</td><td>You already use Cloudflare; free tier, fast global CDN, easy deploy from Git</td></tr>
+        <tr><td>NOTIFICATIONS</td><td>Web Push API</td><td>Native browser push for daily quest reminders, weekly AI reports — zero cost</td></tr>
+        <tr><td>PWA</td><td>Vite PWA Plugin</td><td>You already implemented PWA; home screen install, offline caching for workout logs</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box">
+      <strong style="color:var(--blue)">Why NO backend server?</strong> For a personal app, Supabase Edge Functions handle any server-side logic (AI calls, metric computation). This avoids maintaining a FastAPI server and stays within free tiers. All AI calls are proxied through Edge Functions to hide API keys.
+    </div>
+  </div>
+
+  <!-- AI LAYER TAB -->
+  <div id="tab-ai" class="tab-content">
+    <div class="section-title">
+      <span class="num">001</span><h2>AI Model Allocation</h2><div class="line"></div>
+    </div>
+    <div class="model-row">
+      <div class="model-card">
+        <div class="model-name">GEMINI 1.5 PRO</div>
+        <div class="model-role">Plan Generator</div>
+        <div class="model-tasks">→ 4-week PPL block generation<br>→ Weekly AI report (Monday)<br>→ Full metric-injected system prompt<br>→ Structured JSON output mode<br>→ Called ~1–2x per week (free tier fine)</div>
+      </div>
+      <div class="model-card">
+        <div class="model-name">GROQ / LLAMA 3 70B</div>
+        <div class="model-role">Shadow Coach Chat</div>
+        <div class="model-tasks">→ Real-time coaching conversations<br>→ Context: last 30 days of DB logs<br>→ Ultra-low latency responses<br>→ Form tips, nutrition Q&A<br>→ Proactive nudges & alerts</div>
+      </div>
+    </div>
+    <div class="model-row">
+      <div class="model-card">
+        <div class="model-name">GEMINI 1.5 FLASH</div>
+        <div class="model-role">Daily Quest Engine</div>
+        <div class="model-tasks">→ Generate 3 daily missions<br>→ Personalized to today's planned workout<br>→ XP calculation for completion<br>→ Called once per day (cron via Supabase)</div>
+      </div>
+      <div class="model-card">
+        <div class="model-name">COMPUTED (NO LLM)</div>
+        <div class="model-role">Readiness Metrics</div>
+        <div class="model-tasks">→ Fitness Score: 6-week rolling tonnage<br>→ Fatigue Score: 7-day RPE × volume<br>→ Form (TSB): Fitness − Fatigue<br>→ Computed in Supabase Edge Function<br>→ Runs after every workout log</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">002</span><h2>RAG Context Pattern</h2><div class="line"></div>
+    </div>
+    <div class="info-box purple">
+      <strong style="color:var(--purple)">How the Shadow Coach reads your data:</strong><br><br>
+      User asks: "Why are my shoulders still sore after 3 days?"<br><br>
+      1. Frontend sends query to Supabase Edge Function<br>
+      2. Edge Function fetches last 14 days of shoulder/push workouts from DB<br>
+      3. Computes total push volume, sets, average RPE, days since last session<br>
+      4. Injects all this as structured context into Groq prompt<br>
+      5. LLaMA 3 reasons over REAL data and returns specific advice<br><br>
+      This mirrors the function-calling architecture from the PDF — just adapted to use Supabase instead of Firebase, and Groq instead of Gemini Flash.
+    </div>
+
+    <div class="section-title">
+      <span class="num">003</span><h2>Free Tier Limits & Strategy</h2><div class="line"></div>
+    </div>
+    <table class="stack-table">
+      <thead><tr><th>Model</th><th>Free Tier</th><th>Usage Pattern</th></tr></thead>
+      <tbody>
+        <tr><td>GEMINI PRO</td><td>~15 requests/day, 1M tokens</td><td>Used only for plan gen (~2x/week) + weekly report. Well within limits.</td></tr>
+        <tr><td>GEMINI FLASH</td><td>~15 requests/day, 1M tokens</td><td>Daily quest gen (1x/day). Plenty of headroom.</td></tr>
+        <tr><td>GROQ LLAMA 3</td><td>~14,400 requests/day</td><td>Coach chat (~10–20 msgs/day). Very generous. Use 70B for quality.</td></tr>
+        <tr><td>SUPABASE</td><td>500MB DB, 2GB bandwidth</td><td>Personal use log data stays tiny. 500MB = years of workout logs.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DATABASE TAB -->
+  <div id="tab-database" class="tab-content">
+    <div class="section-title">
+      <span class="num">001</span><h2>Core Tables</h2><div class="line"></div>
+    </div>
+
+    <div class="info-box" style="margin-bottom:12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--teal)">TABLE: workout_sessions</div>
+    <table class="schema-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">id</td><td>uuid</td><td>Primary key</td></tr>
+        <tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users</td></tr>
+        <tr><td>date</td><td>date</td><td>Session date</td></tr>
+        <tr><td>type</td><td>text</td><td>push / pull / legs / full / cardio</td></tr>
+        <tr><td>duration_min</td><td>int</td><td>Total session duration</td></tr>
+        <tr><td>notes</td><td>text</td><td>User notes / AI coach notes</td></tr>
+        <tr><td>xp_earned</td><td>int</td><td>XP awarded for this session</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box" style="margin-bottom:12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--teal)">TABLE: sets_log</div>
+    <table class="schema-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">id</td><td>uuid</td><td>Primary key</td></tr>
+        <tr><td class="fk">session_id</td><td>uuid</td><td>FK → workout_sessions</td></tr>
+        <tr><td>exercise_name</td><td>text</td><td>Bench Press, Squat, etc.</td></tr>
+        <tr><td>set_number</td><td>int</td><td>Set 1, 2, 3…</td></tr>
+        <tr><td>reps</td><td>int</td><td>Completed reps</td></tr>
+        <tr><td>weight_kg</td><td>numeric</td><td>Weight used</td></tr>
+        <tr><td>rpe</td><td>numeric</td><td>Rate of Perceived Exertion (1–10)</td></tr>
+        <tr><td>is_pr</td><td>boolean</td><td>Auto-flagged if new personal record</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box" style="margin-bottom:12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--teal)">TABLE: nutrition_log</div>
+    <table class="schema-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">id</td><td>uuid</td><td>Primary key</td></tr>
+        <tr><td class="fk">user_id</td><td>uuid</td><td>FK → auth.users</td></tr>
+        <tr><td>date</td><td>date</td><td>Log date</td></tr>
+        <tr><td>meal_name</td><td>text</td><td>Breakfast, lunch, snack…</td></tr>
+        <tr><td>calories</td><td>int</td><td>Total kcal</td></tr>
+        <tr><td>protein_g</td><td>numeric</td><td>Grams of protein</td></tr>
+        <tr><td>carbs_g</td><td>numeric</td><td>Grams of carbs</td></tr>
+        <tr><td>fat_g</td><td>numeric</td><td>Grams of fat</td></tr>
+        <tr><td>water_ml</td><td>int</td><td>Water intake for this entry</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box" style="margin-bottom:12px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--teal)">TABLE: hunter_profile</div>
+    <table class="schema-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">user_id</td><td>uuid</td><td>PK + FK → auth.users</td></tr>
+        <tr><td>rank</td><td>text</td><td>E / D / C / B / A / S</td></tr>
+        <tr><td>total_xp</td><td>int</td><td>Cumulative XP</td></tr>
+        <tr><td>current_level</td><td>int</td><td>Level 1–100 within rank</td></tr>
+        <tr><td>fitness_score</td><td>numeric</td><td>6-week rolling tonnage avg</td></tr>
+        <tr><td>fatigue_score</td><td>numeric</td><td>7-day RPE×volume sum</td></tr>
+        <tr><td>streak_days</td><td>int</td><td>Current workout streak</td></tr>
+        <tr><td>bodyweight_kg</td><td>numeric</td><td>Latest logged weight</td></tr>
+        <tr><td>goal</td><td>text</td><td>bulk / cut / maintain</td></tr>
+        <tr><td>calorie_target</td><td>int</td><td>Daily calorie goal</td></tr>
+        <tr><td>protein_target_g</td><td>int</td><td>Daily protein goal</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ROADMAP TAB -->
+  <div id="tab-roadmap" class="tab-content">
+    <div class="section-title">
+      <span class="num">001</span><h2>Build Phases</h2><div class="line"></div>
+    </div>
+
+    <div class="phase-block open" id="phase1">
+      <div class="phase-header" onclick="togglePhase('phase1')">
+        <span class="phase-num">PHASE 01</span>
+        <span class="phase-title">Foundation — Auth, DB, Core Workout Logger</span>
+        <span class="phase-weeks">Week 1–2</span>
+        <span class="phase-chevron">▼</span>
+      </div>
+      <div class="phase-body">
+        <ul class="phase-tasks">
+          <li>Set up React + Vite project with Tailwind, configure dark Solo Leveling theme</li>
+          <li>Supabase project: create all core tables (workout_sessions, sets_log, hunter_profile)</li>
+          <li>Supabase Auth: Google OAuth login + magic link</li>
+          <li>Build workout session logger: add exercises, log sets/reps/weight/RPE</li>
+          <li>Real-time auto-save to Supabase as you log each set</li>
+          <li>Basic dashboard: today's workout plan, recent sessions list</li>
+          <li>Hunter profile page: rank badge, level, XP bar (static for now)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase-block" id="phase2">
+      <div class="phase-header" onclick="togglePhase('phase2')">
+        <span class="phase-num">PHASE 02</span>
+        <span class="phase-title">AI Plan Generator + Readiness Metrics</span>
+        <span class="phase-weeks">Week 3–4</span>
+        <span class="phase-chevron">▼</span>
+      </div>
+      <div class="phase-body">
+        <ul class="phase-tasks">
+          <li>Supabase Edge Function: compute Fitness Score (6-week rolling tonnage)</li>
+          <li>Supabase Edge Function: compute Fatigue Score (7-day RPE×volume)</li>
+          <li>Gemini Pro integration: inject metrics into prompt, generate 4-week PPL JSON plan</li>
+          <li>Plan display UI: weekly interactive calendar, day-by-day exercise cards</li>
+          <li>Deload detection: if fatigue high, Week 1 auto-generates as deload</li>
+          <li>XP system: calculate XP earned per session based on volume and completion</li>
+          <li>Rank-up logic: XP thresholds per rank, rank-up animation (Framer Motion)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase-block" id="phase3">
+      <div class="phase-header" onclick="togglePhase('phase3')">
+        <span class="phase-num">PHASE 03</span>
+        <span class="phase-title">Shadow Coach Chat + Nutrition Tracker</span>
+        <span class="phase-weeks">Week 5–6</span>
+        <span class="phase-chevron">▼</span>
+      </div>
+      <div class="phase-body">
+        <ul class="phase-tasks">
+          <li>Groq LLaMA 3 integration: RAG-style coach chat with DB context injection</li>
+          <li>Edge Function: fetch last 30 days of relevant logs for chat context</li>
+          <li>Coach chat UI: dark panel, streaming responses, Solo Leveling character avatar</li>
+          <li>Nutrition log: meal entry with macro tracking (protein/carbs/fat/calories)</li>
+          <li>Daily macro progress rings: visual doughnut chart per macro</li>
+          <li>AI meal advisor: "I'm short on protein" → contextual meal suggestions via Groq</li>
+          <li>Water intake logger with fill animation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase-block" id="phase4">
+      <div class="phase-header" onclick="togglePhase('phase4')">
+        <span class="phase-num">PHASE 04</span>
+        <span class="phase-title">Gamification + Analytics + Daily Quests</span>
+        <span class="phase-weeks">Week 7–8</span>
+        <span class="phase-chevron">▼</span>
+      </div>
+      <div class="phase-body">
+        <ul class="phase-tasks">
+          <li>Hunter stat sheet: STR / AGI / VIT / INT / LUK computed from real data</li>
+          <li>Daily Quest system: Gemini Flash generates 3 personalized daily missions</li>
+          <li>Progress analytics: volume trends, 1RM estimates, muscle group radar chart</li>
+          <li>Recovery dashboard: Fitness/Fatigue/Form (TSB) gauge visualizations</li>
+          <li>Sleep & stress daily check-in (feeds into fatigue score)</li>
+          <li>Workout calendar: full month view, color-coded sessions</li>
+          <li>PR detection: auto-flag PRs, "skill awakened" celebration animation</li>
+          <li>Streak system: consistency tracker, "Gate Collapse" warning on miss</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase-block" id="phase5">
+      <div class="phase-header" onclick="togglePhase('phase5')">
+        <span class="phase-num">PHASE 05</span>
+        <span class="phase-title">Polish, PWA, Push Notifications & Weekly Report</span>
+        <span class="phase-weeks">Week 9–10</span>
+        <span class="phase-chevron">▼</span>
+      </div>
+      <div class="phase-body">
+        <ul class="phase-tasks">
+          <li>PWA full setup: offline caching, home screen install, app icon set</li>
+          <li>Web Push API: daily quest reminders, weekly AI report notifications</li>
+          <li>Gemini Pro weekly report: Monday morning summary, generated and pushed</li>
+          <li>Body weight trend chart: rolling average, bulk/cut phase tagging</li>
+          <li>Rank-based theme unlocks: gold UI at S-rank, alternate color schemes</li>
+          <li>Deploy to Cloudflare Pages with Supabase Edge Functions wired up</li>
+          <li>Full performance audit: lazy load heavy components, optimize Supabase queries</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- UI SCREENS TAB -->
+  <div id="tab-screens" class="tab-content">
+    <div class="section-title">
+      <span class="num">001</span><h2>Page Structure</h2><div class="line"></div>
+    </div>
+    <div class="screen-grid">
+      <div class="screen-item">
+        <div class="screen-name">/ Dashboard</div>
+        <div class="screen-desc">Today's plan, readiness gate, XP bar, daily quests, quick-log button</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/workout</div>
+        <div class="screen-desc">Live session tracker, exercise list, set/rep/RPE logger, rest timer</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/plan</div>
+        <div class="screen-desc">AI-generated 4-week PPL block, weekly calendar, regenerate trigger</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/diet</div>
+        <div class="screen-desc">Macro rings, meal logger, water tracker, AI meal advisor chat</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/stats</div>
+        <div class="screen-desc">Volume trends, 1RM estimates, muscle radar, recovery TSB gauges</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/coach</div>
+        <div class="screen-desc">Shadow Coach chat panel (Groq), message history, DB-grounded responses</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/calendar</div>
+        <div class="screen-desc">Monthly workout calendar, session history, planned vs completed view</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/hunter</div>
+        <div class="screen-desc">Rank badge, stat sheet (STR/AGI/VIT/INT/LUK), streak, PR hall of fame</div>
+      </div>
+      <div class="screen-item">
+        <div class="screen-name">/settings</div>
+        <div class="screen-desc">Goals, calorie targets, bodyweight, notification prefs, rank theme selector</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span class="num">002</span><h2>Solo Leveling Visual Identity</h2><div class="line"></div>
+    </div>
+    <div class="info-box">
+      <strong style="color:#e0eaff">Color palette:</strong> Deep navy-black backgrounds (#05070f, #0b0f1e), electric blue accents (#4a9eff), gold rank highlights (#f0c040), purple for magic/AI elements (#9b6dff), red for danger/overtraining alerts.
+    </div>
+    <div class="info-box">
+      <strong style="color:#e0eaff">Typography:</strong> Rajdhani (headings — angular, military feel) + Share Tech Mono (stats, numbers, system text) + Inter (body text). All uppercase labels for system messages.
+    </div>
+    <div class="info-box gold">
+      <strong style="color:var(--gold)">Key animations:</strong> Rank-up screen (full overlay, blue particles, rank badge slam), PR "skill awakened" popup, XP bar fill on session complete, Gate readiness status flicker, quest completion scan-line wipe.
+    </div>
+    <div class="info-box purple">
+      <strong style="color:var(--purple)">Terminology map:</strong> Workouts → Raids · Rest days → Recovery Gates · PRs → Skill Awakening · Deload week → Shadow Monarch Retreat · Dashboard → Hunter HQ · AI Coach → Shadow Guide · Rank up → Arise
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+function togglePhase(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+</script>
+</body>
+</html>
