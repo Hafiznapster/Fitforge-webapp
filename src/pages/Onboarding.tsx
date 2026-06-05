@@ -74,6 +74,7 @@ const Onboarding = () => {
         targetCarbs: Math.round((cals * 0.4) / 4),
         targetFat: Math.round((cals * 0.25) / 9)
       });
+      useDietStore.getState().setInitialWeight(w);
 
       // Trigger Awakening Animation
       setShowAwakening(true);

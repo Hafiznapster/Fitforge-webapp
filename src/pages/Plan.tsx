@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
+import { useDietStore } from '../store/dietStore';
 import { generateWorkoutPlan } from '../services/aiService';
 import type { GeneratedPlan } from '../services/aiService';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Plan = () => {
   const { rank, fitnessScore, fatigueScore, savePlan } = useUserStore();
+  const { bodyweightHistory } = useDietStore();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +19,8 @@ const Plan = () => {
     setLoading(true);
     setError('');
     try {
-      const result = await generateWorkoutPlan({ fitnessScore, fatigueScore, rank });
+      const currentWeight = bodyweightHistory.length > 0 ? bodyweightHistory[bodyweightHistory.length - 1].weight : undefined;
+      const result = await generateWorkoutPlan({ fitnessScore, fatigueScore, rank }, currentWeight);
       setPlan(result);
     } catch (err: any) {
       setError(err.message || "Failed to generate plan.");

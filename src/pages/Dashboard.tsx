@@ -3,11 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { generateWeeklyReport } from '../services/aiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useDietStore } from '../store/dietStore';
 
 const Dashboard = () => {
   const { rank, name, playerClass, level, xp, streak, dailyQuests, toggleQuest } = useUserStore();
+  const { bodyweightHistory } = useDietStore();
   const navigate = useNavigate();
   const [showQuestClear, setShowQuestClear] = useState(false);
+  const [reportData, setReportData] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleCompleteQuest = (id: string) => {
     toggleQuest(id);
@@ -18,27 +22,58 @@ const Dashboard = () => {
   };
 
   const handleSimulateWeekly = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        try {
-          const report = await generateWeeklyReport({ rank, level, xp, streak });
-          new Notification('SYSTEM ALERT', {
-            body: report,
-            icon: '/icon-192.png'
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      } else {
-        alert("Please enable notifications to receive the Shadow Coach report.");
-      }
+    setIsGenerating(true);
+    try {
+      const report = await generateWeeklyReport({ rank, level, xp, streak }, bodyweightHistory);
+      setReportData(report);
+    } catch (e) {
+      setReportData("ERROR: FAILED TO CONNECT TO SHADOW COACH SERVER. CHECK API KEY.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
     <div className="max-w-md mx-auto p-4 pb-20 relative">
       <AnimatePresence>
+        {(isGenerating || reportData) && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sl-bg/95 backdrop-blur-md p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-sl-surface border border-sl-blue w-full max-w-sm flex flex-col max-h-[80vh] shadow-[0_0_30px_rgba(74,158,255,0.2)]"
+            >
+              <div className="border-b border-sl-blue bg-sl-blue/10 p-4">
+                <h2 className="font-rajdhani font-bold text-sl-blue tracking-[4px]">SHADOW COACH REPORT</h2>
+              </div>
+              <div className="p-6 overflow-y-auto custom-scrollbar font-share text-sm text-white leading-relaxed whitespace-pre-wrap flex-1">
+                {isGenerating ? (
+                  <div className="flex flex-col items-center justify-center py-10 opacity-70">
+                    <div className="w-8 h-8 border-2 border-sl-blue border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="tracking-widest text-sl-blue text-xs animate-pulse">ANALYZING WEEKLY DATA...</p>
+                  </div>
+                ) : (
+                  reportData
+                )}
+              </div>
+              <div className="p-4 border-t border-sl-blue/30">
+                <button 
+                  onClick={() => setReportData(null)}
+                  disabled={isGenerating}
+                  className="w-full py-3 bg-sl-blue text-sl-bg font-rajdhani font-bold tracking-[2px] disabled:opacity-50"
+                >
+                  ACKNOWLEDGE
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showQuestClear && (
           <motion.div 
             initial={{ opacity: 0 }}

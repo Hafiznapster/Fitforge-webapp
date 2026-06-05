@@ -5,7 +5,7 @@ import { useUserStore } from '../store/userStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Workout = () => {
-  const { activeWorkout, exercises, updateSet, startWorkout, finishWorkout } = useWorkoutStore();
+  const { activeWorkout, exercises, updateSet, addSet, addExercise, startWorkout, finishWorkout } = useWorkoutStore();
   const { gainXp, savedPlan } = useUserStore();
   const [showClear, setShowClear] = useState(false);
   const navigate = useNavigate();
@@ -119,12 +119,20 @@ const Workout = () => {
         ) : (
           <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 text-center mt-8">
             <p className="text-sl-text-mid font-share tracking-widest mb-4">NO ACTIVE DIRECTIVE</p>
-            <button 
-              onClick={() => startWorkout('Free Raid', [])}
-              className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors"
-            >
-              START FREE RAID
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button 
+                onClick={() => startWorkout('Free Raid', [])}
+                className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors"
+              >
+                START FREE RAID
+              </button>
+              <button 
+                onClick={() => navigate('/calendar')}
+                className="bg-sl-surface border border-sl-border text-sl-text-dim px-6 py-3 font-share tracking-widest text-xs hover:border-sl-text-dim hover:text-white transition-colors"
+              >
+                VIEW HISTORY
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -238,14 +246,44 @@ const Workout = () => {
               </div>
             ))}
             
-            <button className="w-full mt-4 border border-dashed border-sl-border text-sl-text-dim py-2 font-share text-xs tracking-widest hover:text-white hover:border-sl-text-dim transition-colors">
+            <button 
+              onClick={() => {
+                const newSet = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  reps: '',
+                  weight: 0,
+                  rpe: 8,
+                  completed: false
+                };
+                addSet(exercise.id, newSet);
+              }}
+              className="w-full mt-4 border border-dashed border-sl-border text-sl-text-dim py-2 font-share text-xs tracking-widest hover:text-white hover:border-sl-text-dim transition-colors"
+            >
               + ADD SET
             </button>
           </div>
         </div>
       ))}
       
-      <button className="w-full bg-sl-surface border border-dashed border-sl-border-strong text-sl-text-dim py-4 hover:border-sl-blue hover:text-sl-blue transition-colors font-share tracking-widest mt-4">
+      <button 
+        onClick={() => {
+          const newName = prompt('Enter exercise name:', 'New Exercise');
+          if (newName) {
+            addExercise({
+              id: Math.random().toString(36).substr(2, 9),
+              name: newName,
+              sets: [{
+                id: Math.random().toString(36).substr(2, 9),
+                reps: '',
+                weight: 0,
+                rpe: 8,
+                completed: false
+              }]
+            });
+          }
+        }}
+        className="w-full bg-sl-surface border border-dashed border-sl-border-strong text-sl-text-dim py-4 hover:border-sl-blue hover:text-sl-blue transition-colors font-share tracking-widest mt-4"
+      >
         + ADD EXERCISE
       </button>
 
@@ -263,6 +301,19 @@ const Workout = () => {
           FINISH RAID
         </button>
       </div>
+
+      <button 
+        onClick={() => {
+          exercises.forEach(ex => {
+            ex.sets.forEach(s => {
+              updateSet(ex.id, s.id, { completed: true, weight: 100, reps: 10 });
+            });
+          });
+        }}
+        className="w-full mt-4 bg-sl-gold/10 border border-sl-gold text-sl-gold font-bold py-2 tracking-widest hover:bg-sl-gold/20 transition-colors font-share text-xs"
+      >
+        DEV: AUTO-COMPLETE ALL SETS
+      </button>
     </div>
   );
 };

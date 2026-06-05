@@ -1,11 +1,35 @@
 import { useUserStore } from '../store/userStore';
+import { useWorkoutStore } from '../store/workoutStore';
+import { useDietStore } from '../store/dietStore';
 import { useNavigate } from 'react-router-dom';
 import { BarChart2, Calendar as CalendarIcon, Settings as SettingsIcon } from 'lucide-react';
 
 const HunterProfile = () => {
-  const { rank, level, xp, xpNeeded, stats, name, playerClass, age } = useUserStore();
+  const { rank, level, xp, xpNeeded, name, playerClass, age, streak } = useUserStore();
+  const { workoutHistory } = useWorkoutStore();
+  const { waterMl } = useDietStore();
   const navigate = useNavigate();
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
+
+  // Dynamic Stat Calculations
+  let totalVolume = 0;
+  workoutHistory.forEach(w => {
+    w.exercises.forEach(ex => {
+      ex.sets.filter(s => s.completed).forEach(s => {
+        const weight = Number(s.weight) || 0;
+        const reps = Number(s.reps) || 0; // If it's a string like "8-10", parseInt handles "8". For simplicity, we just use Number.
+        if (!isNaN(reps)) totalVolume += weight * reps;
+      });
+    });
+  });
+
+  const calculatedStats = {
+    str: 10 + Math.floor(totalVolume / 1000) + (level * 2),
+    agi: 10 + (streak * 3) + level,
+    vit: 10 + Math.floor(waterMl / 500) + (level * 2),
+    int: 10 + workoutHistory.length * 2 + level,
+    luk: 10 + Math.floor(Math.random() * 5) + (rank === 'S' ? 20 : rank === 'A' ? 10 : 0)
+  };
 
   return (
     <div className="max-w-md mx-auto p-4 relative pb-24">
@@ -66,11 +90,11 @@ const HunterProfile = () => {
 
       <div className="bg-sl-surface border border-sl-border p-4">
         {[
-          { label: 'STR (Volume)', value: stats.str },
-          { label: 'AGI (Consistency)', value: stats.agi },
-          { label: 'VIT (Recovery)', value: stats.vit },
-          { label: 'INT (Form)', value: stats.int },
-          { label: 'LUK (Streak)', value: stats.luk },
+          { label: 'STR (Power/Vol)', value: calculatedStats.str },
+          { label: 'AGI (Consistency)', value: calculatedStats.agi },
+          { label: 'VIT (Recovery)', value: calculatedStats.vit },
+          { label: 'INT (System Mastery)', value: calculatedStats.int },
+          { label: 'LUK (RNG)', value: calculatedStats.luk },
         ].map((stat, i) => (
           <div key={i} className="flex justify-between items-center py-2 border-b border-sl-border last:border-0">
             <span className="font-share text-sl-text-mid tracking-widest text-sm">{stat.label}</span>

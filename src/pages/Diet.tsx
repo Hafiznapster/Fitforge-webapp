@@ -126,10 +126,31 @@ const Diet = () => {
             <input type="number" value={f} onChange={(e) => setF(e.target.value)} className="w-full bg-sl-bg border border-sl-border text-white p-2 font-share text-center outline-none focus:border-sl-red" />
           </div>
         </div>
-        <button type="submit" className="w-full border border-dashed border-sl-border-strong text-sl-text-dim py-3 hover:border-sl-blue hover:text-sl-blue transition-colors font-share tracking-widest text-sm">
+        <button type="submit" className="w-full border border-dashed border-sl-border-strong text-sl-text-dim py-3 hover:border-sl-blue hover:text-sl-blue transition-colors font-share tracking-widest text-sm mb-6">
           + ADD MACROS
         </button>
       </form>
+
+      {diet.meals.length > 0 && (
+        <div className="space-y-2 mb-8">
+          {diet.meals.map(meal => (
+            <div key={meal.id} className="bg-sl-surface border border-sl-border p-3 flex justify-between items-center">
+              <div>
+                <p className="font-rajdhani font-bold text-white tracking-[1px]">{meal.name}</p>
+                <p className="font-share text-[10px] text-sl-text-dim tracking-widest">
+                  {meal.protein}P | {meal.carbs}C | {meal.fat}F • {meal.calories} KCAL
+                </p>
+              </div>
+              <button 
+                onClick={() => diet.removeMeal(meal.id)}
+                className="w-8 h-8 flex items-center justify-center text-sl-red/70 hover:text-sl-red hover:bg-sl-red/10 border border-transparent hover:border-sl-red/30 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="section-title">
         <span className="num">002</span><h2>Bodyweight Trend</h2><div className="line"></div>
