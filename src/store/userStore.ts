@@ -37,7 +37,7 @@ interface UserState {
   checkDailyReset: () => void;
   toggleQuest: (id: string) => void;
   toggleTheme: () => void;
-  savePlan: (plan: GeneratedPlan) => void;
+  savePlan: (plan: GeneratedPlan | null) => void;
 }
 
 const generateDailyQuests = (): Quest[] => [

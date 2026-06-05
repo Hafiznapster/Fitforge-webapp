@@ -1,98 +1,143 @@
+import { useState } from 'react';
 import { useUserStore } from '../store/userStore';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const ActivePlan = () => {
-  const { savedPlan } = useUserStore();
+  const { savedPlan, savePlan } = useUserStore();
   const navigate = useNavigate();
+  const [selectedWeek, setSelectedWeek] = useState(1);
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to abandon this directive? All progress will be lost.')) {
+      savePlan(null);
+    }
+  };
+
+  const currentWeekData = savedPlan?.weeks.find(w => w.weekNumber === selectedWeek);
 
   return (
-    <div className="max-w-md mx-auto p-4 pb-24 relative">
+    <div className="max-w-md mx-auto p-4 pb-24 relative min-h-screen">
       <div className="header-badge mt-6">ACTIVE DIRECTIVE</div>
 
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-[2px]">
+          <h1 className="text-3xl font-bold text-white tracking-[4px] uppercase font-rajdhani">
             MY PLAN
           </h1>
-          <p className="font-share text-[12px] text-sl-text-dim tracking-[2px]">
+          <p className="font-share text-[11px] text-sl-text-dim tracking-[3px] mt-1">
             CURRENT TRAINING BLOCK
           </p>
         </div>
-        <button 
-          onClick={() => navigate('/plan')}
-          className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-3 py-2 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors"
-        >
-          GENERATE NEW
-        </button>
+        <div className="flex flex-col gap-2">
+          <button 
+            onClick={() => navigate('/plan')}
+            className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-3 py-1.5 font-share tracking-widest text-[10px] hover:bg-sl-blue/20 transition-colors"
+          >
+            GENERATE NEW
+          </button>
+          {savedPlan && (
+            <button 
+              onClick={handleDelete}
+              className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1.5 font-share tracking-widest text-[10px] hover:bg-red-500/20 transition-colors"
+            >
+              ABANDON DIRECTIVE
+            </button>
+          )}
+        </div>
       </div>
 
       {savedPlan ? (
-        <div className="space-y-10">
-          {savedPlan.weeks.map((week, wIdx) => (
-            <motion.div 
-              key={week.weekNumber} 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: wIdx * 0.1 }}
-              className="bg-sl-surface border border-sl-border p-5 relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+        <div className="flex flex-col h-full">
+          {/* Week Selector Tabs */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+            {savedPlan.weeks.map((week) => (
+              <button
+                key={week.weekNumber}
+                onClick={() => setSelectedWeek(week.weekNumber)}
+                className={`flex-1 min-w-[80px] py-3 text-center font-rajdhani text-sm font-bold tracking-[2px] transition-all duration-300 relative ${
+                  selectedWeek === week.weekNumber 
+                    ? 'text-sl-blue' 
+                    : 'text-sl-text-dim hover:text-white bg-sl-surface border border-sl-border/50'
+                }`}
+              >
+                {selectedWeek === week.weekNumber && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-sl-blue/10 border border-sl-blue z-0 shadow-[0_0_15px_rgba(74,158,255,0.15)]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10">WEEK {week.weekNumber}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Days List */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedWeek}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
             >
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-sl-blue/50" />
-              
-              <div className="flex items-center justify-between border-b border-sl-border/50 pb-4 mb-6">
-                <h3 className="font-rajdhani text-2xl font-bold text-white uppercase tracking-[4px]">
-                  WEEK {week.weekNumber}
-                </h3>
-              </div>
-              
-              <div className="space-y-4">
-                {week.days.map((day, dIdx) => (
-                  <motion.div 
-                    key={day.day} 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (wIdx * 0.1) + (dIdx * 0.05) }}
-                    className="flex flex-col sm:flex-row gap-4 bg-sl-bg/50 border border-sl-border/30 p-4 hover:border-sl-blue/50 transition-colors group"
-                  >
-                    <div className="w-16 flex-shrink-0 flex items-start pt-1">
-                      <div className="w-12 h-12 bg-sl-blue/10 border border-sl-blue flex items-center justify-center font-rajdhani text-xl font-bold text-sl-blue group-hover:bg-sl-blue group-hover:text-sl-bg transition-colors shadow-[0_0_10px_rgba(74,158,255,0.2)]">
-                        D{day.day}
-                      </div>
+              {currentWeekData?.days.map((day, idx) => (
+                <motion.div 
+                  key={day.day}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-sl-surface/60 border border-sl-border/40 backdrop-blur-sm p-4 relative group hover:border-sl-blue/40 transition-colors"
+                >
+                  {/* Decorative corner bracket */}
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-sl-blue/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-sl-blue/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 shrink-0 bg-sl-bg border border-sl-border flex items-center justify-center font-rajdhani text-lg font-bold text-sl-text-mid group-hover:text-sl-blue transition-colors">
+                      D{day.day}
                     </div>
-                    <div className="flex-1">
-                      <p className={`text-lg font-rajdhani font-bold tracking-[4px] uppercase mb-3 ${day.type?.includes('Recovery') ? 'text-sl-teal' : 'text-white'}`}>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`text-sm font-rajdhani font-bold tracking-[3px] uppercase mb-3 truncate ${day.type?.includes('Recovery') ? 'text-sl-teal' : 'text-white'}`}>
                         {day.type}
-                      </p>
+                      </h3>
                       
                       {day.exercises?.length > 0 ? (
-                        <div className="flex flex-col gap-1">
+                        <div className="space-y-2">
                           {day.exercises.map((ex, i) => (
-                            <div key={i} className="flex justify-between items-center py-2 border-b border-sl-border/20 last:border-0 hover:bg-sl-surface/50 px-2 -mx-2 transition-colors">
-                              <span className="text-[13px] font-share text-sl-text-mid uppercase tracking-wide">{ex.name}</span>
-                              <span className="text-[13px] font-share text-sl-blue tracking-widest bg-sl-blue/10 border border-sl-blue/20 px-2 py-0.5">{ex.sets}x{ex.reps}</span>
+                            <div key={i} className="flex justify-between items-center text-[12px] font-share">
+                              <span className="text-sl-text-mid truncate pr-2">{ex.name}</span>
+                              <span className="text-sl-blue shrink-0 opacity-80">{ex.sets} x {ex.reps}</span>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-sl-text-dim font-share text-sm tracking-widest py-2 border border-dashed border-sl-border/50 text-center bg-sl-surface/20">
-                          REST & RECOVER
+                        <div className="text-[11px] font-share text-sl-text-dim tracking-widest uppercase mt-2">
+                          Rest & Recovery Protocols Active
                         </div>
                       )}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
+          </AnimatePresence>
         </div>
       ) : (
-        <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 text-center mt-8">
-          <p className="text-sl-text-mid font-share tracking-widest mb-4">NO ACTIVE DIRECTIVE FOUND</p>
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center border border-dashed border-sl-border-strong bg-sl-surface/30 p-8">
+          <div className="w-16 h-16 rounded-full bg-sl-surface border border-sl-border flex items-center justify-center mb-4 text-2xl text-sl-text-dim">
+            ∅
+          </div>
+          <p className="text-sl-text-mid font-rajdhani text-xl font-bold tracking-[4px] uppercase mb-2">No Active Directive</p>
+          <p className="text-sl-text-dim font-share text-xs tracking-widest mb-6">System requires input to generate plan.</p>
           <button 
             onClick={() => navigate('/plan')}
-            className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors"
+            className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-[3px] font-bold text-xs hover:bg-sl-blue hover:text-sl-bg transition-colors shadow-[0_0_15px_rgba(74,158,255,0.2)]"
           >
-            GENERATE NEW PLAN
+            INITIALIZE NEW PLAN
           </button>
         </div>
       )}

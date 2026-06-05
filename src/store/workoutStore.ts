@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 export interface WorkoutSet {
   id: string;
-  reps: number;
+  reps: string | number;
   weight: number;
   rpe: number;
   completed: boolean;
@@ -19,22 +19,13 @@ interface WorkoutState {
   exercises: Exercise[];
   addSet: (exerciseId: string, set: WorkoutSet) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
-  startWorkout: (type: string) => void;
+  startWorkout: (type: string, initialExercises?: Exercise[]) => void;
   finishWorkout: () => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>((set) => ({
-  activeWorkout: 'Push Day',
-  exercises: [
-    {
-      id: 'bench-press',
-      name: 'Bench Press',
-      sets: [
-        { id: '1', weight: 80, reps: 8, rpe: 7, completed: true },
-        { id: '2', weight: 80, reps: 8, rpe: 8, completed: false },
-      ]
-    }
-  ],
+  activeWorkout: null,
+  exercises: [],
   addSet: (exerciseId, newSet) =>
     set((state) => ({
       exercises: state.exercises.map((ex) =>
@@ -52,6 +43,6 @@ export const useWorkoutStore = create<WorkoutState>((set) => ({
           : ex
       ),
     })),
-  startWorkout: (type) => set({ activeWorkout: type, exercises: [] }),
+  startWorkout: (type, initialExercises = []) => set({ activeWorkout: type, exercises: initialExercises }),
   finishWorkout: () => set({ activeWorkout: null, exercises: [] }),
 }));
