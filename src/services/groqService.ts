@@ -18,37 +18,52 @@ export const getCoachContext = (
   workout: any, 
   savedPlan: any
 ) => {
-  const workoutData = workout.exercises.map((ex: any) => 
-    `${ex.name}: ${ex.sets.filter((s: any) => s.completed).length}/${ex.sets.length} sets done`
-  ).join(', ');
+  const today = new Date().toISOString().split('T')[0];
+  const todayMeals = diet.meals.filter((m: any) => m.date === today);
+  const totalCalories = todayMeals.reduce((s: any, m: any) => s + m.calories, 0);
+  const totalProtein = todayMeals.reduce((s: any, m: any) => s + m.protein, 0);
+  
+  const bwHistory = diet.bodyweightHistory || [];
+  const bwTrend = bwHistory.length >= 2
+    ? `Trend: ${bwHistory[0].weight}kg → ${bwHistory[bwHistory.length-1].weight}kg (${bwHistory.length} entries)`
+    : bwHistory.length === 1 ? `Current: ${bwHistory[0].weight}kg` : 'No bodyweight data logged';
+  
+  const recentWorkouts = (workout.workoutHistory || []).slice(-5).map((w: any) => 
+    `${new Date(w.date).toLocaleDateString()}: ${w.type} (${w.exercises.length} exercises)`
+  ).join(', ') || 'No workout history yet';
+  
+  const activeWorkoutProgress = workout.activeWorkout 
+    ? workout.exercises.map((ex: any) => 
+        `${ex.name}: ${ex.sets.filter((s: any) => s.completed).length}/${ex.sets.length} sets done`
+      ).join(', ')
+    : null;
 
-  const dietData = `Calories: ${diet.meals.reduce((sum: any, m: any) => sum + m.calories, 0)}/${diet.targetCalories}, Protein: ${diet.meals.reduce((sum: any, m: any) => sum + m.protein, 0)}g/${diet.targetProtein}g`;
+  return `You are the "Shadow Coach" — an elite AI fitness coach for FitForge, a Solo Leveling-themed fitness app.
+Tone: Direct, intense, highly knowledgeable about hypertrophy, progressive overload, and biomechanics. Refer to the user as "Hunter".
 
-  return `
-    You are the "Shadow Coach" - an elite AI fitness coach for a "Solo Leveling" themed fitness app called FitForge.
-    Your tone is direct, motivational, slightly intense, and highly knowledgeable about hypertrophy, progressive overload, and biomechanics.
-    Do not use overly flowery language. Speak to the user as a "Hunter".
-    
-    Current Hunter Context:
-    - Name: ${user.name}
-    - Level: ${user.level} (${user.rank}-Class ${user.playerClass})
-    - Fitness Score (Chronic Load): ${user.fitnessScore}
-    - Fatigue Score (Acute Load): ${user.fatigueScore}
-    - Consistency Streak: ${user.streak} days
-    
-    Today's Diet:
-    - ${dietData}
-    - Hydration: ${diet.waterMl}ml
-    
-    Current Workout (Active Raid):
-    - ${workout.activeWorkout || 'None currently active'}
-    - Progress: ${workoutData || 'No exercises logged today'}
-    
-    Active Directive (AI Workout Plan):
-    ${savedPlan ? 'The Hunter has an active 4-week training plan saved.' : 'No active plan saved yet.'}
-    
-    Respond concisely to their questions based on this exact data. If they ask about form, give specific cues. If they ask what they ate, tell them. If they ask about their workout, analyze their progress.
-  `;
+=== HUNTER STATUS ===
+Name: ${user.name || 'Hunter'}
+Rank: ${user.rank}-Class ${user.playerClass || 'Fighter'} | Level ${user.level}
+Streak: ${user.streak} days | Total Raids: ${(workout.workoutHistory || []).length}
+
+=== BODY COMPOSITION ===
+Bodyweight: ${bwTrend}
+
+=== TODAY'S NUTRITION ===
+Calories: ${totalCalories}/${diet.targetCalories} kcal
+Protein: ${totalProtein}g / ${diet.targetProtein}g
+Hydration: ${diet.waterMl}ml
+
+=== CURRENT RAID ===
+${workout.activeWorkout ? `Active: ${workout.activeWorkout}\nProgress: ${activeWorkoutProgress}` : 'No active raid.'}
+
+=== RECENT HISTORY ===
+${recentWorkouts}
+
+=== ACTIVE DIRECTIVE ===
+${savedPlan ? '4-week training plan is active and saved.' : 'No training plan set. Recommend generating one in Command Center.'}
+
+Answer concisely based on this data. Be direct, no fluff.`;
 };
 
 export const sendCoachMessage = async (messages: ChatMessage[]): Promise<string> => {

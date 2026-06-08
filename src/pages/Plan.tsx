@@ -4,7 +4,7 @@ import { useUserStore } from '../store/userStore';
 import { useDietStore } from '../store/dietStore';
 import { generateWorkoutPlan } from '../services/aiService';
 import type { GeneratedPlan } from '../services/aiService';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const Plan = () => {
   const { rank, fitnessScore, fatigueScore, savePlan } = useUserStore();
@@ -13,7 +13,6 @@ const Plan = () => {
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showRankUp, setShowRankUp] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -29,10 +28,6 @@ const Plan = () => {
     }
   };
 
-  const simulateRankUp = () => {
-    setShowRankUp(true);
-    setTimeout(() => setShowRankUp(false), 3000);
-  };
 
   return (
     <div className="max-w-md mx-auto p-4 relative">
@@ -145,53 +140,6 @@ const Plan = () => {
           </button>
         </div>
       )}
-
-      {/* Dev Tool: Trigger Rank Up */}
-      <button 
-        onClick={simulateRankUp}
-        className="mt-8 text-xs font-share text-sl-text-dim border border-sl-border px-3 py-1 bg-sl-surface hover:text-white"
-      >
-        [DEV] TEST AWAKENING
-      </button>
-
-      {/* Rank Up Animation Overlay */}
-      <AnimatePresence>
-        {showRankUp && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sl-bg/95 backdrop-blur-sm"
-          >
-            <motion.div 
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="w-32 h-32 border-4 border-sl-gold bg-sl-surface rotate-45 flex items-center justify-center relative mb-12 shadow-[0_0_40px_rgba(240,192,64,0.3)]"
-            >
-              <span className="font-rajdhani text-6xl text-sl-gold font-bold -rotate-45">{rank}</span>
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-4xl font-rajdhani font-bold text-white tracking-[6px] mb-2"
-            >
-              LEVEL UP
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="font-share text-sl-gold tracking-[4px]"
-            >
-              SKILL AWAKENED
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

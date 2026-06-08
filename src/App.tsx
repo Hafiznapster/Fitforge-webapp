@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { Component, type ReactNode, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
 import { useUserStore } from './store/userStore';
@@ -16,7 +16,30 @@ import Settings from './pages/Settings';
 import HunterProfile from './pages/HunterProfile';
 import ActivePlan from './pages/ActivePlan';
 
-const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-sl-bg flex flex-col items-center justify-center p-8 text-center">
+          <p className="font-share text-sl-red tracking-widest text-sm mb-2">SYSTEM ERROR</p>
+          <h1 className="font-rajdhani text-3xl text-white font-bold mb-4">CRITICAL FAILURE</h1>
+          <p className="text-sl-text-dim font-share text-xs mb-6">An unexpected error occurred. The system has been stabilized.</p>
+          <button onClick={() => window.location.reload()} className="border border-sl-blue text-sl-blue px-6 py-3 font-share text-xs tracking-widest hover:bg-sl-blue hover:text-white transition-colors">
+            REBOOT SYSTEM
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const AuthGuard = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
 
@@ -58,25 +81,29 @@ function App() {
   }, [checkDailyReset, theme]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/register" element={<Registration />} />
-        <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
-        
-        <Route path="/" element={<AuthGuard><MainLayout /></AuthGuard>}>
-          <Route index element={<Dashboard />} />
-          <Route path="active-plan" element={<ActivePlan />} />
-          <Route path="plan" element={<Plan />} />
-          <Route path="workout" element={<Workout />} />
-          <Route path="diet" element={<Diet />} />
-          <Route path="coach" element={<Coach />} />
-          <Route path="hunter" element={<HunterProfile />} />
-          <Route path="stats" element={<Stats />} />
-          <Route path="calendar" element={<CalendarView />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/register" element={<Registration />} />
+          <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
+          
+          <Route path="/" element={<AuthGuard><MainLayout /></AuthGuard>}>
+            <Route index element={<Dashboard />} />
+            <Route path="active-plan" element={<ActivePlan />} />
+            <Route path="plan" element={<Plan />} />
+            <Route path="workout" element={<Workout />} />
+            <Route path="diet" element={<Diet />} />
+            <Route path="coach" element={<Coach />} />
+            <Route path="hunter" element={<HunterProfile />} />
+            <Route path="stats" element={<Stats />} />
+            <Route path="calendar" element={<CalendarView />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/register" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

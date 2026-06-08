@@ -71,6 +71,10 @@ const CalendarView = () => {
             const dayWorkouts = getWorkoutsForDay(day);
             const isCompleted = dayWorkouts.length > 0;
             const isSelected = selectedDay === day;
+            const now = new Date();
+            const isToday = day === now.getDate() &&
+              currentDate.getMonth() === now.getMonth() &&
+              currentDate.getFullYear() === now.getFullYear();
             
             return (
               <div 
@@ -79,12 +83,14 @@ const CalendarView = () => {
                 className={`aspect-square flex flex-col items-center justify-center border font-share text-sm transition-colors cursor-pointer relative
                   ${isSelected ? 'border-sl-blue bg-sl-blue text-sl-bg' : 
                     isCompleted ? 'border-sl-blue bg-sl-blue/20 text-white hover:bg-sl-blue/40' : 
+                    isToday ? 'border-sl-teal bg-sl-teal/10 text-sl-teal' :
                     'border-sl-border bg-sl-bg text-sl-text-mid hover:border-sl-text-dim'}
                 `}
               >
                 {day}
                 {isCompleted && !isSelected && <div className="w-1.5 h-1.5 bg-sl-blue rounded-full absolute bottom-1"></div>}
                 {isCompleted && isSelected && <div className="w-1.5 h-1.5 bg-sl-bg rounded-full absolute bottom-1"></div>}
+                {isToday && !isCompleted && !isSelected && <div className="w-1.5 h-1.5 bg-sl-teal rounded-full absolute bottom-1"></div>}
               </div>
             );
           })}

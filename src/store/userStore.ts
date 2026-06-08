@@ -79,11 +79,15 @@ export const useUserStore = create<UserState>()(
         set((state) => {
           let newXp = state.xp + amount;
           let newLevel = state.level;
-          if (newXp >= state.xpNeeded) {
+          let newXpNeeded = state.xpNeeded;
+          while (newXp >= newXpNeeded) {
+            newXp -= newXpNeeded;
             newLevel += 1;
-            newXp = newXp - state.xpNeeded;
+            newXpNeeded = Math.round(newXpNeeded * 1.25);
           }
-          return { xp: newXp, level: newLevel };
+          const rankThresholds: Array<[number, string]> = [[50,'S'],[30,'A'],[20,'B'],[10,'C'],[5,'D']];
+          const newRank = rankThresholds.find(([lvl]) => newLevel >= lvl)?.[1] ?? state.rank;
+          return { xp: newXp, level: newLevel, xpNeeded: newXpNeeded, rank: newRank };
         }),
       updateReadiness: (fitness, fatigue) => set({ fitnessScore: fitness, fatigueScore: fatigue }),
       checkDailyReset: () => {

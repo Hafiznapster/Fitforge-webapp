@@ -31,18 +31,21 @@ const HunterProfile = () => {
     });
   });
 
+  // Use date-based seed so LUK is stable for the day, not random on each render
+  const dailySeed = new Date().getDate() + new Date().getMonth();
   const calculatedStats = {
     str: 10 + Math.floor(totalVolume / 1000) + (level * 2),
     agi: 10 + (streak * 3) + level,
     vit: 10 + Math.floor(waterMl / 500) + (level * 2),
     int: 10 + workoutHistory.length * 2 + level,
-    luk: 10 + Math.floor(Math.random() * 5) + (rank === 'S' ? 20 : rank === 'A' ? 10 : 0)
+    luk: 10 + (dailySeed % 5) + (rank === 'S' ? 20 : rank === 'A' ? 10 : rank === 'B' ? 5 : 0)
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.clear();
-    window.location.href = '/register';
+    // Clear FitForge-specific localStorage keys
+    ['fitforge-system-storage', 'fitforge-diet-storage', 'fitforge-workout-storage', 'fitforge_guest', 'fitforge_guest_profile'].forEach(k => localStorage.removeItem(k));
+    navigate('/register');
   };
 
   const handleSaveProfile = async () => {
@@ -91,7 +94,7 @@ const HunterProfile = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-sl-blue-glow rounded-full blur-2xl"></div>
         <div className="w-24 h-24 rounded border border-sl-border bg-sl-surface flex flex-col items-center justify-center relative z-10 shadow-[0_0_20px_rgba(74,158,255,0.1)]">
           <span className="text-4xl font-bold font-rajdhani text-white">{rank}</span>
-          <span className="text-[10px] font-share text-sl-blue tracking-widest mt-1">CLASS</span>
+          <span className="text-[10px] font-share text-sl-blue tracking-widest mt-1">RANK</span>
         </div>
       </div>
 
@@ -153,8 +156,7 @@ const HunterProfile = () => {
 
         <button 
           onClick={useUserStore.getState().toggleTheme}
-          className={`w-full flex items-center justify-center gap-2 py-3 border font-share text-xs tracking-[3px] transition-colors ${rank === 'S' || true ? 'border-sl-blue text-sl-blue bg-sl-blue/10 hover:bg-sl-blue/20' : 'border-sl-border text-sl-text-dim opacity-50 cursor-not-allowed'}`}
-        >
+          className={`w-full flex items-center justify-center gap-2 py-3 border font-share text-xs tracking-[3px] transition-colors border-sl-blue text-sl-blue bg-sl-blue/10 hover:bg-sl-blue/20`}>
           TOGGLE S-RANK THEME
         </button>
 
@@ -200,7 +202,7 @@ const HunterProfile = () => {
                 />
               </div>
               <div>
-                <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">CLASS</label>
+                <span className="font-share text-[10px] text-sl-text-dim tracking-widest mt-1">CLASS</span>
                 <select 
                   value={editClass} 
                   onChange={(e) => setEditClass(e.target.value)} 

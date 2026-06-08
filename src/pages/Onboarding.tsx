@@ -16,7 +16,8 @@ const Onboarding = () => {
   const [height, setHeight] = useState('');
   const [goal, setGoal] = useState('Muscle Building');
   const [frequency, setFrequency] = useState('4x a week');
-  const [intensity, setIntensity] = useState('Heavy');
+  const [intensity, setIntensity] = useState('Heavy (Low Reps, Max Strength)');
+  const [step2Error, setStep2Error] = useState('');
   const [supplements, setSupplements] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
 
@@ -133,8 +134,16 @@ const Onboarding = () => {
             </div>
             <div className="flex gap-4 mt-8">
               <button onClick={() => setStep(1)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px]">BACK</button>
-              <button onClick={() => setStep(3)} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px]">NEXT: GOALS</button>
+              <button onClick={() => {
+                if (!weight || !height) {
+                  setStep2Error('Weight and height are required.');
+                  return;
+                }
+                setStep2Error('');
+                setStep(3);
+              }} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px]">NEXT: GOALS</button>
             </div>
+            {step2Error && <p className="text-red-500 font-share text-xs mt-2 tracking-widest">{step2Error}</p>}
           </motion.div>
         )}
 

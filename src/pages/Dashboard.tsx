@@ -2,23 +2,30 @@ import { useUserStore } from '../store/userStore';
 import { useNavigate } from 'react-router-dom';
 import { generateWeeklyReport } from '../services/aiService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useDietStore } from '../store/dietStore';
 
 const Dashboard = () => {
-  const { rank, name, playerClass, level, xp, streak, dailyQuests, toggleQuest } = useUserStore();
+  const { rank, name, playerClass, level, xp, streak, dailyQuests, toggleQuest, gainXp } = useUserStore();
   const { bodyweightHistory } = useDietStore();
   const navigate = useNavigate();
   const [showQuestClear, setShowQuestClear] = useState(false);
   const [reportData, setReportData] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const questTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCompleteQuest = (id: string) => {
+    const quest = dailyQuests.find(q => q.id === id);
+    // Only celebrate when going from incomplete → complete
+    if (quest && !quest.completed) {
+      gainXp(50);
+      setShowQuestClear(true);
+      if (questTimerRef.current) clearTimeout(questTimerRef.current);
+      questTimerRef.current = setTimeout(() => {
+        setShowQuestClear(false);
+      }, 2000);
+    }
     toggleQuest(id);
-    setShowQuestClear(true);
-    setTimeout(() => {
-      setShowQuestClear(false);
-    }, 2000);
   };
 
   const handleSimulateWeekly = async () => {
@@ -100,10 +107,10 @@ const Dashboard = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-[4px]">
-            {name.toUpperCase()}
+            {(name || 'Hunter').toUpperCase()}
           </h1>
           <p className="font-share text-[12px] text-sl-text-dim tracking-[2px]">
-            RANK: {rank} | CLASS: {playerClass.toUpperCase()}
+            RANK: {rank} | CLASS: {(playerClass || 'Fighter').toUpperCase()}
           </p>
         </div>
         <div className="w-12 h-12 rounded bg-sl-surface border border-sl-border flex items-center justify-center">

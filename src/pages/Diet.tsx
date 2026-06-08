@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDietStore } from '../store/dietStore';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -43,7 +43,12 @@ const Diet = () => {
   const [f, setF] = useState('');
   const [bw, setBw] = useState('');
 
-  const todayMeals = diet.meals.filter(m => m.id); // Assuming all are today for simplicity in this demo
+  useEffect(() => {
+    diet.checkDailyReset();
+  }, []);
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayMeals = diet.meals.filter(m => m.date === today);
 
   const calories = todayMeals.reduce((sum, meal) => sum + meal.calories, 0);
   const protein = todayMeals.reduce((sum, meal) => sum + meal.protein, 0);
