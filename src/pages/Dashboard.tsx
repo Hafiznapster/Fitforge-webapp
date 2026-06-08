@@ -41,7 +41,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 pb-20 relative">
+    <div className="max-w-md mx-auto p-4 pb-28 relative">
       <AnimatePresence>
         {(isGenerating || reportData) && (
           <motion.div 

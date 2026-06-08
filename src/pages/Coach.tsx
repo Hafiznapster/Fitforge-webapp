@@ -64,7 +64,7 @@ const Coach = () => {
   const displayMessages = messages.filter(m => m.role !== 'system');
 
   return (
-    <div className="max-w-md mx-auto p-4 flex flex-col h-[calc(100vh-80px)]">
+    <div className="max-w-md mx-auto p-4 flex flex-col h-[calc(100dvh-80px)] pb-safe">
       <div className="flex items-center justify-between shrink-0">
         <div className="header-badge mt-2">SHADOW COACH</div>
         <button onClick={handleClearChat} className="mt-2 flex items-center gap-1 text-sl-text-dim hover:text-white transition-colors font-share text-xs tracking-widest">

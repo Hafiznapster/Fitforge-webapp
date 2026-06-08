@@ -12,7 +12,7 @@
   }
 
   body {
-    @apply bg-sl-bg text-sl-text-mid font-inter antialiased min-h-screen overflow-x-hidden;
+    @apply bg-sl-bg text-sl-text-mid font-inter antialiased min-h-[100dvh] overflow-x-hidden;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -23,6 +23,15 @@
     --theme-primary: 240 192 64;
     --theme-primary-dim: 122 90 16;
     --theme-primary-glow: rgba(240,192,64,0.15);
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 20px);
   }
 }
 
