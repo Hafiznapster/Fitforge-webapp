@@ -6,11 +6,11 @@ const MainLayout = () => {
   const location = useLocation();
   const navItems = [
     { to: '/', icon: Home, label: 'HQ' },
-    { to: '/active-plan', icon: Calendar, label: 'MY PLAN' },
+    { to: '/active-plan', icon: Calendar, label: 'PLAN' },
     { to: '/workout', icon: Dumbbell, label: 'RAID' },
     { to: '/diet', icon: Utensils, label: 'DIET' },
     { to: '/coach', icon: MessageSquare, label: 'COACH' },
-    { to: '/hunter', icon: User, label: 'PROFILE' },
+    { to: '/hunter', icon: User, label: 'HUNTER' },
   ];
 
   return (
@@ -39,9 +39,9 @@ const MainLayout = () => {
               className={({ isActive }) => `flex flex-col items-center p-2 flex-1 transition-colors ${isActive ? 'text-sl-blue' : 'text-sl-text-dim hover:text-sl-text-mid'}`}
             >
               <motion.div whileTap={{ scale: 0.8 }} className="relative">
-                <Icon size={24} strokeWidth={1.5} />
+                <Icon size={20} strokeWidth={1.5} />
               </motion.div>
-              <span className="font-share text-[9px] tracking-[0.2em] mt-1 whitespace-nowrap">{label}</span>
+              <span className="font-share text-[9px] tracking-wider mt-1 whitespace-nowrap">{label}</span>
             </NavLink>
           ))}
         </div>

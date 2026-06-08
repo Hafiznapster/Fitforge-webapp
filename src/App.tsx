@@ -2,6 +2,7 @@ import { Component, type ReactNode, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
 import { useUserStore } from './store/userStore';
+import { useDietStore } from './store/dietStore';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Workout from './pages/Workout';
@@ -44,15 +45,57 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
+    const hydrateProfile = async (userId: string | null, isGuest: boolean) => {
+      try {
+        let profile = null;
+        if (isGuest) {
+          const stored = localStorage.getItem('fitforge_guest_profile');
+          if (stored) profile = JSON.parse(stored);
+        } else if (userId) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+          profile = data;
+        }
+
+        if (profile) {
+          useUserStore.getState().updateProfile(
+            profile.hunter_name || 'Hunter', 
+            null, 
+            profile.player_class || 'Fighter'
+          );
+          if (profile.rank) {
+            useUserStore.setState({ rank: profile.rank });
+          }
+          if (profile.weight_kg) {
+            useDietStore.getState().setInitialWeight(profile.weight_kg);
+          }
+          if (profile.target_calories) {
+            useDietStore.setState({
+              targetCalories: profile.target_calories,
+              targetProtein: Math.round(profile.weight_kg * 2.2),
+              targetCarbs: Math.round((profile.target_calories * 0.4) / 4),
+              targetFat: Math.round((profile.target_calories * 0.25) / 9)
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to hydrate profile", err);
+      }
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      const isGuest = localStorage.getItem('fitforge_guest') === 'true';
+      hydrateProfile(session?.user?.id || null, isGuest).finally(() => {
+        setLoading(false);
+      });
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      const isGuest = localStorage.getItem('fitforge_guest') === 'true';
+      hydrateProfile(session?.user?.id || null, isGuest);
     });
 
     return () => subscription.unsubscribe();
@@ -60,7 +103,7 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
 
   const isGuest = localStorage.getItem('fitforge_guest') === 'true';
 
-  if (loading) return <div className="min-h-screen bg-sl-bg flex items-center justify-center text-sl-blue font-share tracking-widest">SYSTEM LOADING...</div>;
+  if (loading) return <div className="min-h-[100dvh] bg-sl-bg flex items-center justify-center text-sl-blue font-share tracking-widest">SYSTEM LOADING...</div>;
   if (!session && !isGuest) return <Navigate to="/register" />;
 
   return children;

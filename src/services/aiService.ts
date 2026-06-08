@@ -3,7 +3,14 @@ import { supabase } from './supabaseClient';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ 
+  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-2.5-flash",
+  generationConfig: { responseMimeType: "application/json" }
+});
+
+const textModel = genAI.getGenerativeModel({ 
+  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-2.5-flash"
+});
 
 export interface GeneratedPlan {
   weeks: {
@@ -111,7 +118,7 @@ export const generateWeeklyReport = async (stats: any, bodyweightHistory?: any[]
       Style: Solo Leveling system prompt, dark, demanding but encouraging.
     `;
     
-    const result = await model.generateContent(prompt);
+    const result = await textModel.generateContent(prompt);
     return result.response.text().trim();
   } catch (error) {
     console.error("Error generating report:", error);
