@@ -4,12 +4,16 @@ import { supabase } from './supabaseClient';
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
-  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-2.5-flash",
-  generationConfig: { responseMimeType: "application/json" }
+  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-3.5-flash",
+  generationConfig: { 
+    responseMimeType: "application/json",
+    maxOutputTokens: 8192,
+    temperature: 0.2
+  }
 });
 
 const textModel = genAI.getGenerativeModel({ 
-  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-2.5-flash"
+  model: import.meta.env.VITE_GEMINI_FLASH_MODEL || "gemini-3.5-flash"
 });
 
 export interface GeneratedPlan {
@@ -55,7 +59,6 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
 
     const weightToUse = currentWeight || profile.weight_kg;
     const height = profile.height_cm;
-    const calculatedBmi = Number((weightToUse / ((height / 100) * (height / 100))).toFixed(1));
 
     const prompt = `
     You are the FitForge Shadow Coach (an AI).
@@ -64,17 +67,17 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
     Hunter Profile Details:
     - Current Weight: ${weightToUse} kg
     - Height: ${height} cm
-    - Current BMI: ${calculatedBmi}
     - Goal: ${profile.fitness_goal}
     - Intensity: ${profile.workout_intensity}
     - Frequency: ${profile.workout_frequency}
     - Supplements: ${(profile.supplements || []).join(', ')}
-    - Previous Plan: ${profile.current_plan || 'None'}
 
-    Based heavily on their Goal (${profile.fitness_goal}) and Frequency (${profile.workout_frequency}), generate a 4-week workout plan for this user.
-    If Fatigue is > 10000, Week 1 should be a deload week.
+    CRITICAL INSTRUCTION: You MUST generate a COMPLETE 4-week workout plan. 
+    You MUST output exactly 4 weeks. Each week MUST contain exactly 7 days (Days 1 through 7).
+    DO NOT use placeholders. DO NOT stop early. If a day is a rest day, provide "Rest" as the type and an empty exercises array.
+    Provide realistic, detailed exercises (4-6 per workout day) with sets and reps.
     
-    Output ONLY raw valid JSON matching this structure:
+    Output ONLY raw valid JSON matching this exact structure:
     {
       "weeks": [
         {
@@ -84,14 +87,15 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
               "day": 1,
               "type": "Push",
               "exercises": [
-                { "name": "Bench Press", "sets": 3, "reps": "8-10" }
+                { "name": "Barbell Bench Press", "sets": 4, "reps": "8-10" }
               ]
             }
+            // ... MUST include days 1 through 7
           ]
         }
+        // ... MUST include weeks 1 through 4
       ]
     }
-    Generate exactly 4 weeks. Each week should have 7 days. Use reasonable rest days based on their frequency (${profile.workout_frequency}).
     `;
 
     const result = await model.generateContent(prompt);
