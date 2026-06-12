@@ -57,6 +57,32 @@
   .card-tag {
     @apply inline-block mt-2 font-share text-[10px] px-2 py-0.5 border tracking-widest;
   }
+  
+  /* Feature Colors */
+  .feat-workout { @apply text-sl-blue border-sl-blue shadow-[0_0_8px_rgba(74,158,255,0.4)]; }
+  .feat-diet { @apply text-teal-400 border-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.4)]; }
+  .feat-stats { @apply text-purple-400 border-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.4)]; }
+
+  /* Rank Badges */
+  .rank-S { @apply text-sl-gold border-sl-gold shadow-[0_0_15px_rgba(240,192,64,0.6)] bg-sl-gold/10; }
+  .rank-A { @apply text-orange-400 border-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.5)] bg-orange-400/10; }
+  .rank-B { @apply text-purple-400 border-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.4)] bg-purple-400/10; }
+  .rank-C { @apply text-sl-blue border-sl-blue shadow-[0_0_8px_rgba(74,158,255,0.4)] bg-sl-blue/10; }
+  .rank-D { @apply text-green-400 border-green-400 shadow-[0_0_6px_rgba(74,222,128,0.3)] bg-green-400/10; }
+  .rank-E { @apply text-gray-400 border-gray-400 bg-gray-400/10; }
+}
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(to right, theme('colors.sl.surface') 4%, theme('colors.sl.surface2') 25%, theme('colors.sl.surface') 36%);
+    background-size: 1000px 100%;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
 }
 
 /* Custom Scrollbar for dark theme */

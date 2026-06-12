@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GeneratedPlan } from '../services/aiService';
 
+import { supabase } from '../services/supabaseClient';
+import { playSound } from '../utils/audioContext';
+
 interface Quest {
   id: string;
   desc: string;
@@ -9,7 +12,6 @@ interface Quest {
 }
 
 interface UserState {
-  isRegistered: boolean;
   name: string;
   age: number | null;
   playerClass: string;
@@ -17,40 +19,38 @@ interface UserState {
   level: number;
   xp: number;
   xpNeeded: number;
-  fitnessScore: number;
-  fatigueScore: number;
-  stats: {
-    str: string;
-    agi: string;
-    vit: string;
-    int: string;
-    luk: string;
-  };
   streak: number;
   lastLoginDate: string;
   dailyQuests: Quest[];
   theme: 'default' | 's-rank';
+  statPoints: number;
+  stats: {
+    STR: number;
+    AGI: number;
+    VIT: number;
+    INT: number;
+  };
   savedPlan: GeneratedPlan | null;
-  registerUser: (name: string, age: number, playerClass: string) => void;
   gainXp: (amount: number) => void;
-  updateReadiness: (fitness: number, fatigue: number) => void;
   checkDailyReset: () => void;
   toggleQuest: (id: string) => void;
   toggleTheme: () => void;
+  allocateStat: (statName: keyof UserState['stats']) => void;
   savePlan: (plan: GeneratedPlan | null) => void;
   updateProfile: (name: string, age: number | null, playerClass: string) => void;
+  syncToSupabase: () => void;
 }
 
+// TODO: Make this dynamic based on diet targets and active plan
 const generateDailyQuests = (): Quest[] => [
-  { id: '1', desc: 'Hit 150g protein', completed: false },
+  { id: '1', desc: 'Hit daily protein target', completed: false },
   { id: '2', desc: 'Complete workout session', completed: false },
-  { id: '3', desc: 'Log 3L of water', completed: false },
+  { id: '3', desc: 'Hit daily water goal', completed: false },
 ];
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      isRegistered: false,
       name: 'Player',
       age: null,
       playerClass: 'Fighter',
@@ -58,38 +58,62 @@ export const useUserStore = create<UserState>()(
       level: 1,
       xp: 0,
       xpNeeded: 1000,
-      fitnessScore: 12000,
-      fatigueScore: 8500,
-      stats: {
-        str: '10',
-        agi: '10',
-        vit: '10',
-        int: '10',
-        luk: '10',
-      },
       streak: 0,
       lastLoginDate: new Date().toISOString().split('T')[0],
       dailyQuests: generateDailyQuests(),
       theme: 'default',
+      statPoints: 0,
+      stats: {
+        STR: 10,
+        AGI: 10,
+        VIT: 10,
+        INT: 10,
+      },
       savedPlan: null,
-      registerUser: (name, age, playerClass) => set({ isRegistered: true, name, age, playerClass }),
       updateProfile: (name, age, playerClass) => set({ name, age, playerClass }),
       savePlan: (plan) => set({ savedPlan: plan }),
+      syncToSupabase: async () => {
+        const state = get();
+        const isGuest = localStorage.getItem('fitforge_guest') === 'true';
+        if (isGuest) return;
+        
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            await supabase.from('profiles').update({
+              rank: state.rank,
+              level: state.level,
+              xp: state.xp,
+              streak: state.streak,
+            }).eq('id', session.user.id);
+          }
+        } catch (e) {
+          console.error("Failed to sync to Supabase", e);
+        }
+      },
       gainXp: (amount) =>
         set((state) => {
           let newXp = state.xp + amount;
           let newLevel = state.level;
           let newXpNeeded = state.xpNeeded;
+          let leveledUp = false;
+          let newStatPoints = state.statPoints;
           while (newXp >= newXpNeeded) {
             newXp -= newXpNeeded;
             newLevel += 1;
             newXpNeeded = Math.round(newXpNeeded * 1.25);
+            leveledUp = true;
+            newStatPoints += 3;
           }
           const rankThresholds: Array<[number, string]> = [[50,'S'],[30,'A'],[20,'B'],[10,'C'],[5,'D']];
           const newRank = rankThresholds.find(([lvl]) => newLevel >= lvl)?.[1] ?? state.rank;
-          return { xp: newXp, level: newLevel, xpNeeded: newXpNeeded, rank: newRank };
+          setTimeout(() => get().syncToSupabase(), 0);
+
+          if (leveledUp) playSound('levelUp');
+          else if (amount > 0) playSound('xpGain');
+
+          return { xp: newXp, level: newLevel, xpNeeded: newXpNeeded, rank: newRank, statPoints: newStatPoints };
         }),
-      updateReadiness: (fitness, fatigue) => set({ fitnessScore: fitness, fatigueScore: fatigue }),
       checkDailyReset: () => {
         const today = new Date().toISOString().split('T')[0];
         const state = get();
@@ -114,16 +138,35 @@ export const useUserStore = create<UserState>()(
             dailyQuests: generateDailyQuests(),
             streak: newStreak
           });
+          setTimeout(() => get().syncToSupabase(), 0);
         }
       },
-      toggleQuest: (id) => set((state) => ({
-        dailyQuests: state.dailyQuests.map(q => 
-          q.id === id ? { ...q, completed: !q.completed } : q
-        )
-      })),
+      toggleQuest: (id) => set((state) => {
+        const newQuests = state.dailyQuests.map(q => {
+          if (q.id === id) {
+             const newlyCompleted = !q.completed;
+             if (newlyCompleted) playSound('questComplete');
+             return { ...q, completed: newlyCompleted };
+          }
+          return q;
+        });
+        return { dailyQuests: newQuests };
+      }),
       toggleTheme: () => set((state) => ({
         theme: state.theme === 'default' ? 's-rank' : 'default'
       })),
+      allocateStat: (statName) => set((state) => {
+        if (state.statPoints > 0) {
+          return {
+            statPoints: state.statPoints - 1,
+            stats: {
+              ...state.stats,
+              [statName]: state.stats[statName] + 1
+            }
+          };
+        }
+        return state;
+      }),
     }),
     {
       name: 'fitforge-system-storage',

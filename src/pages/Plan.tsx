@@ -7,7 +7,7 @@ import type { GeneratedPlan } from '../services/aiService';
 import { motion } from 'framer-motion';
 
 const Plan = () => {
-  const { rank, fitnessScore, fatigueScore, savePlan } = useUserStore();
+  const { rank, savePlan } = useUserStore();
   const { bodyweightHistory } = useDietStore();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
@@ -19,7 +19,7 @@ const Plan = () => {
     setError('');
     try {
       const currentWeight = bodyweightHistory.length > 0 ? bodyweightHistory[bodyweightHistory.length - 1].weight : undefined;
-      const result = await generateWorkoutPlan({ fitnessScore, fatigueScore, rank }, currentWeight);
+      const result = await generateWorkoutPlan({ rank }, currentWeight);
       setPlan(result);
     } catch (err: any) {
       setError(err.message || "Failed to generate plan.");

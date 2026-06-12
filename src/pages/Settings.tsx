@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDietStore } from '../store/dietStore';
+import { supabase } from '../services/supabaseClient';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -11,20 +13,58 @@ const Settings = () => {
   const [pro, setPro] = useState(diet.targetProtein.toString());
   const [carbs, setCarbs] = useState(diet.targetCarbs.toString());
   const [fat, setFat] = useState(diet.targetFat.toString());
+  const [showToast, setShowToast] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    const newCalories = Number(cals) || 2000;
     useDietStore.setState({
-      targetCalories: Number(cals) || 2000,
+      targetCalories: newCalories,
       targetProtein: Number(pro) || 150,
       targetCarbs: Number(carbs) || 200,
       targetFat: Number(fat) || 60
     });
-    alert("SYSTEM UPDATED: Macro targets saved successfully.");
+    
+    // Sync to Supabase
+    try {
+      const isGuest = localStorage.getItem('fitforge_guest') === 'true';
+      if (!isGuest) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          await supabase.from('profiles').update({
+            target_calories: newCalories
+          }).eq('id', session.user.id);
+        }
+      } else {
+        const stored = localStorage.getItem('fitforge_guest_profile');
+        if (stored) {
+          const profile = JSON.parse(stored);
+          profile.target_calories = newCalories;
+          localStorage.setItem('fitforge_guest_profile', JSON.stringify(profile));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync targets:", err);
+    }
+
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
     <div className="max-w-md mx-auto p-4 relative pb-24">
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className="fixed bottom-24 left-1/2 bg-sl-surface border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-[3px] text-xs shadow-[0_0_20px_rgba(74,158,255,0.3)] backdrop-blur-md z-50 whitespace-nowrap"
+          >
+            MACRO TARGETS SYNCHRONIZED
+          </motion.div>
+        )}
+      </AnimatePresence>
       <button onClick={() => navigate(-1)} className="text-sl-text-dim hover:text-white mb-6 flex items-center gap-2">
         <ArrowLeft size={16} /> <span className="font-share text-xs tracking-widest">BACK</span>
       </button>
@@ -65,18 +105,7 @@ const Settings = () => {
         </button>
       </form>
 
-      <div className="section-title">
-        <span className="num">002</span><h2>Notifications</h2><div className="line"></div>
-      </div>
-      <div className="bg-sl-surface border border-sl-border p-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-white font-rajdhani tracking-widest text-lg mb-1">SYSTEM ALERTS</h3>
-          <p className="text-sl-text-dim font-share text-xs">Allow push notifications for daily quests and reports</p>
-        </div>
-        <div className="w-12 h-6 rounded-full bg-sl-blue/20 border border-sl-blue relative cursor-pointer">
-          <div className="absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 bg-sl-blue rounded-full shadow-[0_0_10px_rgba(74,158,255,0.8)]"></div>
-        </div>
-      </div>
+      {/* Removed fake Notifications section */}
     </div>
   );
 };

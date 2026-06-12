@@ -3,11 +3,12 @@ import { useUserStore } from '../store/userStore';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useDietStore } from '../store/dietStore';
 import { useNavigate } from 'react-router-dom';
-import { BarChart2, Calendar as CalendarIcon, Settings as SettingsIcon, LogOut, Edit3, X } from 'lucide-react';
+import { BarChart2, Calendar as CalendarIcon, Settings as SettingsIcon, LogOut, Edit3, X, ChevronDown } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const HunterProfile = () => {
-  const { rank, level, xp, xpNeeded, name, playerClass, age, streak, updateProfile } = useUserStore();
+  const { rank, level, xp, xpNeeded, name, playerClass, age, streak, updateProfile, stats, statPoints, allocateStat } = useUserStore();
   const { workoutHistory } = useWorkoutStore();
   const { waterMl } = useDietStore();
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const HunterProfile = () => {
   const [editAge, setEditAge] = useState(age?.toString() || '');
   const [editClass, setEditClass] = useState(playerClass);
   const [isSaving, setIsSaving] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
   // Dynamic Stat Calculations
   let totalVolume = 0;
@@ -33,12 +35,12 @@ const HunterProfile = () => {
 
   // Use date-based seed so LUK is stable for the day, not random on each render
   const dailySeed = new Date().getDate() + new Date().getMonth();
-  const calculatedStats = {
-    str: 10 + Math.floor(totalVolume / 1000) + (level * 2),
-    agi: 10 + (streak * 3) + level,
-    vit: 10 + Math.floor(waterMl / 500) + (level * 2),
-    int: 10 + workoutHistory.length * 2 + level,
-    luk: 10 + (dailySeed % 5) + (rank === 'S' ? 20 : rank === 'A' ? 10 : rank === 'B' ? 5 : 0)
+  const bonusStats = {
+    STR: Math.floor(totalVolume / 1000) + (level * 2),
+    AGI: (streak * 3) + level,
+    VIT: Math.floor(waterMl / 500) + (level * 2),
+    INT: workoutHistory.length * 2 + level,
+    LUK: (dailySeed % 5) + (rank === 'S' ? 20 : rank === 'A' ? 10 : rank === 'B' ? 5 : 0)
   };
 
   const handleLogout = async () => {
@@ -73,14 +75,27 @@ const HunterProfile = () => {
       setIsEditing(false);
     } catch (error) {
       console.error(error);
-      alert("Failed to save profile");
+      setToastMsg("SYSTEM ERROR: FAILED TO SAVE");
+      setTimeout(() => setToastMsg(''), 3000);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 relative pb-24">
+    <div className="max-w-md mx-auto p-4 relative pb-24 overflow-hidden">
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className="fixed bottom-24 left-1/2 bg-sl-surface border border-red-500 text-red-500 px-6 py-3 font-share tracking-[3px] text-xs shadow-[0_0_20px_rgba(239,68,68,0.3)] backdrop-blur-md z-50 whitespace-nowrap"
+          >
+            {toastMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="header-badge mt-6">STATUS WINDOW</div>
       
       <div className="text-center mb-8 relative">
@@ -91,11 +106,20 @@ const HunterProfile = () => {
       </div>
 
       <div className="flex flex-col items-center mt-8 mb-10 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-sl-blue-glow rounded-full blur-2xl"></div>
-        <div className="w-24 h-24 rounded border border-sl-border bg-sl-surface flex flex-col items-center justify-center relative z-10 shadow-[0_0_20px_rgba(74,158,255,0.1)]">
-          <span className="text-4xl font-bold font-rajdhani text-white">{rank}</span>
-          <span className="text-[10px] font-share text-sl-blue tracking-widest mt-1">RANK</span>
-        </div>
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ duration: 4, repeat: Infinity }}
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl rank-${rank} opacity-20`}
+        ></motion.div>
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring" }}
+          className={`w-28 h-28 rounded-lg border flex flex-col items-center justify-center relative z-10 rank-${rank}`}
+        >
+          <span className="text-5xl font-bold font-rajdhani">{rank}</span>
+          <span className="text-[10px] font-share tracking-widest mt-1 opacity-80">RANK</span>
+        </motion.div>
       </div>
 
       <div className="mb-8">
@@ -123,21 +147,41 @@ const HunterProfile = () => {
         </button>
       </div>
 
-      <div className="section-title">
-        <span className="num">001</span><h2>Base Stats</h2><div className="line"></div>
+      <div className="section-title flex justify-between items-end">
+        <div>
+          <span className="num">001</span><h2>Attributes</h2>
+        </div>
+        {statPoints > 0 && (
+          <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }} className="font-share text-xs tracking-widest text-sl-gold border border-sl-gold px-2 py-1 mb-1">
+            {statPoints} POINTS AVAILABLE
+          </motion.div>
+        )}
       </div>
 
       <div className="bg-sl-surface border border-sl-border p-4 mb-8">
         {[
-          { label: 'STR (Power/Vol)', value: calculatedStats.str },
-          { label: 'AGI (Consistency)', value: calculatedStats.agi },
-          { label: 'VIT (Recovery)', value: calculatedStats.vit },
-          { label: 'INT (System Mastery)', value: calculatedStats.int },
-          { label: 'LUK (RNG)', value: calculatedStats.luk },
+          { key: 'STR', label: 'STR (Power)', base: stats?.STR ?? 10, bonus: bonusStats.STR },
+          { key: 'AGI', label: 'AGI (Consistency)', base: stats?.AGI ?? 10, bonus: bonusStats.AGI },
+          { key: 'VIT', label: 'VIT (Recovery)', base: stats?.VIT ?? 10, bonus: bonusStats.VIT },
+          { key: 'INT', label: 'INT (Mastery)', base: stats?.INT ?? 10, bonus: bonusStats.INT },
+          { key: 'LUK', label: 'LUK (RNG)', base: 10, bonus: bonusStats.LUK }, // LUK cannot be allocated
         ].map((stat, i) => (
-          <div key={i} className="flex justify-between items-center py-2 border-b border-sl-border last:border-0">
-            <span className="font-share text-sl-text-mid tracking-widest text-sm">{stat.label}</span>
-            <span className="font-rajdhani text-lg font-bold text-white">{stat.value}</span>
+          <div key={i} className="flex justify-between items-center py-3 border-b border-sl-border/50 last:border-0 group">
+            <div className="flex flex-col">
+              <span className="font-share text-sl-text-mid tracking-widest text-xs uppercase">{stat.label}</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="font-rajdhani text-xl font-bold text-white">{stat.base + stat.bonus}</span>
+                <span className="font-share text-[10px] text-sl-blue tracking-widest">(BASE: {stat.base} + {stat.bonus})</span>
+              </div>
+            </div>
+            {statPoints > 0 && stat.key !== 'LUK' && (
+              <button 
+                onClick={() => allocateStat(stat.key as keyof typeof stats)}
+                className="w-8 h-8 flex items-center justify-center border border-sl-gold text-sl-gold hover:bg-sl-gold hover:text-sl-bg transition-colors font-bold pb-1"
+              >
+                +
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -203,16 +247,19 @@ const HunterProfile = () => {
               </div>
               <div>
                 <span className="font-share text-[10px] text-sl-text-dim tracking-widest mt-1">CLASS</span>
-                <select 
-                  value={editClass} 
-                  onChange={(e) => setEditClass(e.target.value)} 
-                  className="w-full bg-sl-bg border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue appearance-none"
-                >
-                  <option>Fighter</option>
-                  <option>Assassin</option>
-                  <option>Tank</option>
-                  <option>Mage</option>
-                </select>
+                <div className="relative">
+                  <select 
+                    value={editClass} 
+                    onChange={(e) => setEditClass(e.target.value)} 
+                    className="w-full bg-sl-bg border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue appearance-none"
+                  >
+                    <option>Fighter</option>
+                    <option>Assassin</option>
+                    <option>Tank</option>
+                    <option>Mage</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+                </div>
               </div>
             </div>
 

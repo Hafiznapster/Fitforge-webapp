@@ -63,7 +63,12 @@ const AuthGuard = ({ children }: { children: ReactNode }) => {
             profile.player_class || 'Fighter'
           );
           if (profile.rank) {
-            useUserStore.setState({ rank: profile.rank });
+            useUserStore.setState({ 
+              rank: profile.rank,
+              level: profile.level || 1,
+              xp: profile.xp || 0,
+              streak: profile.streak || 0
+            });
           }
           if (profile.weight_kg) {
             useDietStore.getState().setInitialWeight(profile.weight_kg);

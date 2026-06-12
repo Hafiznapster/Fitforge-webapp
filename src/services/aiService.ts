@@ -62,7 +62,7 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
 
     const prompt = `
     You are the FitForge Shadow Coach (an AI).
-    User Stats: Rank ${userStats.rank}, Fitness ${userStats.fitnessScore}, Fatigue ${userStats.fatigueScore}.
+    User Stats: Rank ${userStats.rank || 'E'}.
     
     Hunter Profile Details:
     - Current Weight: ${weightToUse} kg
@@ -72,10 +72,13 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
     - Frequency: ${profile.workout_frequency}
     - Supplements: ${(profile.supplements || []).join(', ')}
 
-    CRITICAL INSTRUCTION: You MUST generate a COMPLETE 4-week workout plan. 
-    You MUST output exactly 4 weeks. Each week MUST contain exactly 7 days (Days 1 through 7).
-    DO NOT use placeholders. DO NOT stop early. If a day is a rest day, provide "Rest" as the type and an empty exercises array.
-    Provide realistic, detailed exercises (4-6 per workout day) with sets and reps.
+    CRITICAL SYSTEM DIRECTIVE:
+    You MUST output a completely valid, fully populated JSON object for a 4-week training block.
+    DO NOT use comments like "// ...". DO NOT truncate the output.
+    You MUST provide EXACTLY 4 weeks.
+    Each week MUST contain EXACTLY 7 days.
+    For rest days, set "type" to "Rest" and "exercises" to an empty array [].
+    For workout days, provide 4-6 exercises.
     
     Output ONLY raw valid JSON matching this exact structure:
     {
@@ -90,10 +93,8 @@ export const generateWorkoutPlan = async (userStats: any, currentWeight?: number
                 { "name": "Barbell Bench Press", "sets": 4, "reps": "8-10" }
               ]
             }
-            // ... MUST include days 1 through 7
           ]
         }
-        // ... MUST include weeks 1 through 4
       ]
     }
     `;

@@ -59,13 +59,14 @@ export const useDietStore = create<DietState>()(
         newHistory.push({ date: today, weight });
         return { bodyweightHistory: newHistory.sort((a, b) => a.date.localeCompare(b.date)) };
       }),
-      setInitialWeight: (weight) => set({
-        bodyweightHistory: [{ date: new Date().toISOString().split('T')[0], weight }]
+      setInitialWeight: (weight) => set((state) => {
+        if (state.bodyweightHistory.length > 0) return {};
+        return { bodyweightHistory: [{ date: new Date().toISOString().split('T')[0], weight }] };
       }),
       checkDailyReset: () => set((state) => {
         const today = new Date().toISOString().split('T')[0];
         if (state.lastLogDate !== today) {
-          return { meals: [], waterMl: 0, lastLogDate: today };
+          return { waterMl: 0, lastLogDate: today };
         }
         return {};
       }),

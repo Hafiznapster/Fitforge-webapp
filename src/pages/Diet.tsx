@@ -4,23 +4,23 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 
 const MacroRing = ({ value, max, label, colorClass }: { value: number, max: number, label: string, colorClass: string }) => {
   const percentage = Math.min((value / max) * 100, 100);
-  const radius = 30;
+  const radius = 35;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-20 h-20">
+      <div className="relative w-24 h-24">
         <svg className="w-full h-full transform -rotate-90">
           <circle 
-            cx="40" cy="40" r={radius} 
+            cx="48" cy="48" r={radius} 
             className="stroke-sl-surface fill-transparent" 
-            strokeWidth="6"
+            strokeWidth="8"
           />
           <circle 
-            cx="40" cy="40" r={radius} 
+            cx="48" cy="48" r={radius} 
             className={`fill-transparent transition-all duration-1000 ease-out ${colorClass}`} 
-            strokeWidth="6"
+            strokeWidth="8"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
@@ -28,7 +28,29 @@ const MacroRing = ({ value, max, label, colorClass }: { value: number, max: numb
         </svg>
         <div className="absolute inset-0 flex items-center justify-center flex-col">
           <span className="font-share text-[10px] text-sl-text-dim">{label}</span>
-          <span className="font-rajdhani text-sm text-white font-bold">{Math.round(value)}g</span>
+          <span className="font-rajdhani text-base text-white font-bold">{Math.round(value)}g</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CalorieRing = ({ value, max }: { value: number, max: number }) => {
+  const percentage = Math.min((value / max) * 100, 100);
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-40 h-40 mb-4">
+        <svg className="w-full h-full transform -rotate-90">
+          <circle cx="80" cy="80" r={radius} className="stroke-sl-surface fill-transparent" strokeWidth="12" />
+          <circle cx="80" cy="80" r={radius} className="fill-transparent stroke-white transition-all duration-1000" strokeWidth="12" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" filter="drop-shadow(0 0 10px rgba(255,255,255,0.3))" />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <span className="font-rajdhani text-4xl text-white font-bold">{Math.round(value)}</span>
+          <span className="font-share text-[10px] text-sl-text-dim tracking-widest">/ {max} KCAL</span>
         </div>
       </div>
     </div>
@@ -88,17 +110,10 @@ const Diet = () => {
       
       <h1 className="text-2xl font-bold text-white tracking-[2px] mb-6">NUTRITION & BODY</h1>
 
-      <div className="bg-sl-surface border border-sl-border p-6 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-center">
-            <p className="font-share text-sl-text-dim text-xs tracking-widest">CALORIES</p>
-            <p className="font-rajdhani text-3xl font-bold text-white">
-              {Math.round(calories)} <span className="text-sl-text-dim text-lg">/ {diet.targetCalories}</span>
-            </p>
-          </div>
-        </div>
+      <div className="bg-sl-surface border border-sl-border p-6 mb-6 flex flex-col items-center">
+        <CalorieRing value={calories} max={diet.targetCalories} />
 
-        <div className="flex justify-between">
+        <div className="flex justify-around w-full mt-4">
           <MacroRing value={protein} max={diet.targetProtein} label="PRO" colorClass="stroke-sl-blue" />
           <MacroRing value={carbs} max={diet.targetCarbs} label="CARB" colorClass="stroke-sl-gold" />
           <MacroRing value={fat} max={diet.targetFat} label="FAT" colorClass="stroke-sl-red" />

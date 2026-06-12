@@ -28,6 +28,7 @@ interface WorkoutState {
   startTime: string | null;
   workoutHistory: WorkoutHistoryEntry[];
   addSet: (exerciseId: string, set: WorkoutSet) => void;
+  deleteSet: (exerciseId: string, setId: string) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
   addExercise: (exercise: Exercise) => void;
   startWorkout: (type: string, initialExercises?: Exercise[]) => void;
@@ -46,6 +47,12 @@ export const useWorkoutStore = create<WorkoutState>()(
     set((state) => ({
       exercises: state.exercises.map((ex) =>
         ex.id === exerciseId ? { ...ex, sets: [...ex.sets, newSet] } : ex
+      ),
+    })),
+  deleteSet: (exerciseId, setId) =>
+    set((state) => ({
+      exercises: state.exercises.map((ex) =>
+        ex.id === exerciseId ? { ...ex, sets: ex.sets.filter(s => s.id !== setId) } : ex
       ),
     })),
   updateSet: (exerciseId, setId, updates) =>

@@ -7,11 +7,11 @@ const ActivePlan = () => {
   const { savedPlan, savePlan } = useUserStore();
   const navigate = useNavigate();
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to abandon this directive? All progress will be lost.')) {
-      savePlan(null);
-    }
+    savePlan(null);
+    setShowConfirm(false);
   };
 
   const currentWeekData = savedPlan?.weeks.find(w => w.weekNumber === selectedWeek);
@@ -38,7 +38,7 @@ const ActivePlan = () => {
           </button>
           {savedPlan && (
             <button 
-              onClick={handleDelete}
+              onClick={() => setShowConfirm(true)}
               className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 py-1.5 font-share tracking-widest text-[10px] hover:bg-red-500/20 transition-colors"
             >
               ABANDON DIRECTIVE
@@ -46,6 +46,43 @@ const ActivePlan = () => {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-sl-bg/80 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-sl-surface border border-red-500 p-6 max-w-sm w-full text-center shadow-[0_0_30px_rgba(239,68,68,0.2)]"
+            >
+              <h2 className="text-xl font-rajdhani font-bold text-red-500 tracking-[4px] mb-4">WARNING</h2>
+              <p className="font-share text-sl-text-mid tracking-widest text-sm mb-8 leading-relaxed">
+                ARE YOU SURE YOU WANT TO ABANDON THIS DIRECTIVE? ALL PROGRESS WILL BE DELETED FOREVER.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px] hover:text-white transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 bg-red-500/10 border border-red-500 text-red-500 py-3 font-share tracking-[3px] hover:bg-red-500/20 transition-colors"
+                >
+                  ABANDON
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {savedPlan ? (
         <div className="flex flex-col h-full">

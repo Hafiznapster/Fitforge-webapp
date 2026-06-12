@@ -3,14 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useUserStore } from '../store/userStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EXERCISE_DATABASE } from '../data/exerciseDatabase';
+import { Trash2 } from 'lucide-react';
+import LevelUpVFX from '../components/LevelUpVFX';
 
 const Workout = () => {
-  const { activeWorkout, exercises, updateSet, addSet, addExercise, startWorkout, finishWorkout, abandonWorkout } = useWorkoutStore();
+  const { activeWorkout, exercises, workoutHistory, startTime, updateSet, addSet, deleteSet, addExercise, startWorkout, finishWorkout, abandonWorkout } = useWorkoutStore();
   const { gainXp, savedPlan } = useUserStore();
   const [showClear, setShowClear] = useState(false);
   const [showAbandon, setShowAbandon] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [newExName, setNewExName] = useState('');
+  const [durationStr, setDurationStr] = useState('00:00:00');
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
   const isFinishing = useRef(false);
   const restInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -26,6 +30,33 @@ const Workout = () => {
       if (restInterval.current) clearInterval(restInterval.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!startTime) return;
+    const interval = setInterval(() => {
+      const diff = Math.floor((new Date().getTime() - new Date(startTime).getTime()) / 1000);
+      const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+      const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+      const s = (diff % 60).toString().padStart(2, '0');
+      setDurationStr(`${h}:${m}:${s}`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  const getLastPerformance = (exerciseName: string) => {
+    for (let i = workoutHistory.length - 1; i >= 0; i--) {
+      const workout = workoutHistory[i];
+      const match = workout.exercises.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
+      if (match) {
+        const completedSets = match.sets.filter(s => s.completed);
+        if (completedSets.length > 0) {
+          const maxWeightSet = completedSets.reduce((prev, current) => (Number(prev.weight) > Number(current.weight)) ? prev : current);
+          return `PREV: ${maxWeightSet.weight}KG × ${maxWeightSet.reps}`;
+        }
+      }
+    }
+    return 'NO PREVIOUS DATA';
+  };
 
   const startRestTimer = (seconds = 90) => {
     if (restInterval.current) clearInterval(restInterval.current);
@@ -182,10 +213,21 @@ const Workout = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-sl-surface border border-sl-border p-6 w-full max-w-sm">
             <h3 className="font-rajdhani text-white text-xl tracking-widest mb-4">ADD EXERCISE</h3>
-            <input autoFocus type="text" value={newExName} onChange={e => setNewExName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddExercise()}
-              className="w-full bg-sl-bg border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue mb-4"
-              placeholder="e.g. Bench Press" />
+            <div className="relative mb-4">
+              <input autoFocus type="text" value={newExName} onChange={e => setNewExName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddExercise()}
+                className="w-full bg-sl-bg border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue"
+                placeholder="e.g. Bench Press" />
+              {newExName.length > 1 && (
+                <div className="absolute top-full left-0 right-0 bg-sl-surface border border-sl-border mt-1 max-h-40 overflow-y-auto z-10 shadow-[0_4px_15px_rgba(0,0,0,0.5)]">
+                  {EXERCISE_DATABASE.filter(ex => ex.name.toLowerCase().includes(newExName.toLowerCase())).slice(0, 5).map((ex, i) => (
+                    <div key={i} onClick={() => setNewExName(ex.name)} className="p-3 border-b border-sl-border/50 text-white font-share text-xs hover:bg-sl-blue/20 cursor-pointer">
+                      {ex.name} <span className="text-sl-text-dim ml-2">({ex.category})</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <button onClick={() => { setShowAddExercise(false); setNewExName(''); }}
                 className="flex-1 border border-sl-border text-sl-text-dim py-2 font-share text-xs tracking-widest hover:text-white">CANCEL</button>
@@ -213,6 +255,7 @@ const Workout = () => {
       )}
 
       <AnimatePresence>
+        <LevelUpVFX isVisible={showClear} />
         {showClear && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-sl-bg/95 backdrop-blur-sm">
@@ -229,15 +272,25 @@ const Workout = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="header-badge mt-6">ACTIVE RAID</div>
-      <h1 className="text-2xl font-bold text-white tracking-[2px] mb-6 uppercase font-rajdhani">{activeWorkout}</h1>
+      <div className="flex justify-between items-end mt-6 mb-6">
+        <div>
+          <div className="header-badge mb-1">ACTIVE RAID</div>
+          <h1 className="text-2xl font-bold text-white tracking-[2px] uppercase font-rajdhani">{activeWorkout}</h1>
+        </div>
+        <div className="text-right">
+          <span className="font-share text-sl-text-dim tracking-widest text-[10px] block mb-1">ELAPSED TIME</span>
+          <span className="font-rajdhani text-xl text-sl-teal font-bold">{durationStr}</span>
+        </div>
+      </div>
 
       {exercises.map((exercise, index) => (
         <div key={exercise.id}>
           <div className="section-title">
             <span className="num">{(index + 1).toString().padStart(2, '0')}</span>
-            <h2>{exercise.name}</h2>
+            <div className="flex flex-col">
+              <h2>{exercise.name}</h2>
+              <span className="font-share text-[10px] text-sl-blue tracking-widest mt-1 uppercase">{getLastPerformance(exercise.name)}</span>
+            </div>
             <div className="line"></div>
           </div>
           <div className="bg-sl-surface border border-sl-border p-4 mb-6 shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
@@ -272,12 +325,15 @@ const Workout = () => {
                       className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
                       placeholder="8" value={set.rpe || ''}
                       onChange={(e) => updateSet(exercise.id, set.id, { rpe: Number(e.target.value) })} />
-                    <button
-                      onClick={() => { updateSet(exercise.id, set.id, { completed: true }); startRestTimer(90); }}
-                      className="w-8 h-8 border border-sl-blue bg-sl-blue/10 flex items-center justify-center text-sl-blue text-xs hover:bg-sl-blue hover:text-sl-bg transition-colors">✓</button>
-                  </>
-                )}
-              </div>
+                      <button
+                        onClick={() => { updateSet(exercise.id, set.id, { completed: true }); startRestTimer(90); }}
+                        className="w-8 h-8 border border-sl-blue bg-sl-blue/10 flex items-center justify-center text-sl-blue text-xs hover:bg-sl-blue hover:text-sl-bg transition-colors">✓</button>
+                      <button onClick={() => deleteSet(exercise.id, set.id)} className="text-sl-text-dim hover:text-red-500 transition-colors ml-1">
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
             ))}
             <button onClick={() => {
               addSet(exercise.id, { id: crypto.randomUUID().slice(0, 8), reps: '', weight: 0, rpe: 8, completed: false });

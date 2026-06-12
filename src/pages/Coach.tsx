@@ -2,22 +2,21 @@ import { useState, useRef, useEffect } from 'react';
 import { useUserStore } from '../store/userStore';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useDietStore } from '../store/dietStore';
+import { useChatStore } from '../store/chatStore';
 import { sendCoachMessage, getCoachContext } from '../services/groqService';
 import type { ChatMessage } from '../services/groqService';
 import { Trash2 } from 'lucide-react';
 
 const Coach = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { messages, setMessages, addMessage } = useChatStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
 
   // Initialize with system prompt ONCE on mount — do NOT put store objects in deps
   // as they return new references on every render, causing infinite re-initialization
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    if (messages.length > 0) return;
     const user = useUserStore.getState();
     const diet = useDietStore.getState();
     const workout = useWorkoutStore.getState();
@@ -26,7 +25,7 @@ const Coach = () => {
       content: getCoachContext(user, diet, workout, user.savedPlan)
     };
     setMessages([systemPrompt]);
-  }, []);
+  }, [messages.length, setMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,16 +34,17 @@ const Coach = () => {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
-    const newMessages: ChatMessage[] = [...messages, { role: 'user', content: input }];
-    setMessages(newMessages);
+    const userMsg: ChatMessage = { role: 'user', content: input };
+    addMessage(userMsg);
+    const updatedMessages = [...messages, userMsg];
     setInput('');
     setLoading(true);
     try {
-      const responseContent = await sendCoachMessage(newMessages);
-      setMessages([...newMessages, { role: 'assistant', content: responseContent }]);
+      const responseContent = await sendCoachMessage(updatedMessages);
+      addMessage({ role: 'assistant', content: responseContent });
     } catch (error) {
       console.error(error);
-      setMessages([...newMessages, { role: 'assistant', content: 'SYSTEM ERROR: Connection to Shadow Realm severed.' }]);
+      addMessage({ role: 'assistant', content: 'SYSTEM ERROR: Connection to Shadow Realm severed.' });
     } finally {
       setLoading(false);
     }

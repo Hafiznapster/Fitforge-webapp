@@ -36,12 +36,22 @@ const MainLayout = () => {
             <NavLink 
               key={to} 
               to={to} 
-              className={({ isActive }) => `flex flex-col items-center p-2 flex-1 transition-colors ${isActive ? 'text-sl-blue' : 'text-sl-text-dim hover:text-sl-text-mid'}`}
+              className={({ isActive }) => `flex flex-col items-center pt-2 pb-2 flex-1 transition-colors relative ${isActive ? 'text-sl-blue' : 'text-sl-text-dim hover:text-sl-text-mid'}`}
             >
-              <motion.div whileTap={{ scale: 0.8 }} className="relative">
-                <Icon size={20} strokeWidth={1.5} />
-              </motion.div>
-              <span className="font-share text-[9px] tracking-wider mt-1 whitespace-nowrap">{label}</span>
+              {({ isActive }) => (
+                <>
+                  <motion.div whileTap={{ scale: 0.8 }} className="relative">
+                    <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2 : 1.5} />
+                  </motion.div>
+                  <span className={`font-share tracking-wider mt-1 whitespace-nowrap ${isActive ? 'text-[11px] font-bold' : 'text-[10px]'}`}>{label}</span>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="nav-indicator" 
+                      className="absolute bottom-0 w-8 h-1 bg-sl-blue rounded-t-full shadow-[0_0_8px_rgba(74,158,255,0.8)]" 
+                    />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </div>

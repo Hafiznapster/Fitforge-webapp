@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { ArrowLeft, Trophy, Zap, Target, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useDietStore } from '../store/dietStore';
 import { useUserStore } from '../store/userStore';
@@ -35,6 +36,41 @@ const Stats = () => {
   const { streak, level } = useUserStore();
 
   const hasHistory = workoutHistory.length > 0;
+
+  const coreLifts = useMemo(() => {
+    const lifts = new Set<string>();
+    workoutHistory.forEach(w => w.exercises.forEach(ex => {
+      if (ex.sets.some(s => s.completed && (Number(s.weight) || 0) > 0)) {
+        lifts.add(ex.name);
+      }
+    }));
+    return Array.from(lifts);
+  }, [workoutHistory]);
+
+  const [selectedLift, setSelectedLift] = useState<string>('');
+
+  useEffect(() => {
+    if (coreLifts.length > 0 && !selectedLift) setSelectedLift(coreLifts[0]);
+  }, [coreLifts, selectedLift]);
+
+  const liftHistory = useMemo(() => {
+    if (!selectedLift) return [];
+    const history: { date: string; maxEst: number }[] = [];
+    workoutHistory.forEach(w => {
+      const match = w.exercises.find(e => e.name === selectedLift);
+      if (match) {
+        let maxEst = 0;
+        match.sets.filter(s => s.completed).forEach(s => {
+          const est = epley1RM(Number(s.weight) || 0, Number(s.reps) || 0);
+          if (est > maxEst) maxEst = est;
+        });
+        if (maxEst > 0) {
+          history.push({ date: w.date.substring(5, 10), maxEst });
+        }
+      }
+    });
+    return history.slice(-15);
+  }, [workoutHistory, selectedLift]);
 
   // ── Muscle Volume Radar ──────────────────────────────────────────
   const radarData = useMemo(() => {
@@ -97,16 +133,26 @@ const Stats = () => {
     v >= 1000 ? `${(v / 1000).toFixed(1)}t` : `${v}kg`;
 
   return (
-    <div className="max-w-md mx-auto p-4 relative pb-24">
-      <button onClick={() => navigate(-1)} className="text-sl-text-dim hover:text-white mb-6 flex items-center gap-2">
+    <motion.div 
+      initial="hidden" 
+      animate="show" 
+      variants={{
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+      }}
+      className="max-w-md mx-auto p-4 relative pb-24"
+    >
+      <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} onClick={() => navigate(-1)} className="text-sl-text-dim hover:text-white mb-6 flex items-center gap-2">
         <ArrowLeft size={16} /> <span className="font-share text-xs tracking-widest">BACK</span>
-      </button>
+      </motion.button>
 
-      <div className="header-badge mt-2">ANALYTICS SYS</div>
-      <h1 className="text-3xl font-bold text-white tracking-[4px] mb-8 font-rajdhani">STATISTICS</h1>
+      <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
+        <div className="header-badge mt-2">ANALYTICS SYS</div>
+        <h1 className="text-3xl font-bold text-white tracking-[4px] mb-8 font-rajdhani">STATISTICS</h1>
+      </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} className="grid grid-cols-2 gap-3 mb-8">
         {[
           { icon: <Zap size={16} />, label: 'TOTAL RAIDS', value: workoutHistory.length.toString() },
           { icon: <TrendingUp size={16} />, label: 'TOTAL VOLUME', value: formatVolume(totalVolume) },
@@ -121,13 +167,14 @@ const Stats = () => {
             </div>
           </div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Muscle Development Radar */}
-      <div className="section-title">
-        <span className="num">001</span><h2>Muscle Development</h2><div className="line"></div>
-      </div>
-      <div className="bg-sl-surface border border-sl-border p-4 mb-8">
+      <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
+        <div className="section-title">
+          <span className="num">001</span><h2>Muscle Development</h2><div className="line"></div>
+        </div>
+        <div className="bg-sl-surface border border-sl-border p-4 mb-8">
         {hasHistory ? (
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -146,32 +193,72 @@ const Stats = () => {
             </p>
           </div>
         )}
-      </div>
+        </div>
+      </motion.div>
 
       {/* Estimated 1RM */}
-      <div className="section-title">
-        <span className="num">002</span><h2>Estimated 1RM</h2><div className="line"></div>
-      </div>
-      <div className="mb-8">
+      <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
+        <div className="section-title">
+          <span className="num">002</span><h2>Estimated 1RM</h2><div className="line"></div>
+        </div>
+        <div className="mb-8">
         {estimated1RMs.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {estimated1RMs.map(([name, weight], i) => (
-              <div key={i} className="bg-sl-surface border border-sl-border p-4 text-center">
-                <p className="font-share text-[9px] text-sl-text-dim tracking-widest mb-2 uppercase truncate">{name}</p>
-                <p className="font-rajdhani text-2xl font-bold text-white">{weight}<span className="text-sm text-sl-text-dim ml-1">kg</span></p>
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {estimated1RMs.map(([name, weight], i) => (
+                <div key={i} className="bg-sl-surface border border-sl-border p-4 text-center">
+                  <p className="font-share text-[9px] text-sl-text-dim tracking-widest mb-2 uppercase truncate">{name}</p>
+                  <p className="font-rajdhani text-2xl font-bold text-white">{weight}<span className="text-sm text-sl-text-dim ml-1">kg</span></p>
+                </div>
+              ))}
+            </div>
+            
+            {coreLifts.length > 0 && (
+              <div className="bg-sl-surface border border-sl-border p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-share text-[10px] text-sl-text-dim tracking-widest uppercase">1RM Progression</span>
+                  <select 
+                    value={selectedLift} 
+                    onChange={e => setSelectedLift(e.target.value)}
+                    className="bg-sl-bg border border-sl-border text-white text-xs font-share py-1 px-2 outline-none focus:border-sl-blue max-w-[150px] truncate"
+                  >
+                    {coreLifts.map(lift => <option key={lift} value={lift}>{lift}</option>)}
+                  </select>
+                </div>
+                {liftHistory.length > 1 ? (
+                  <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={liftHistory}>
+                        <XAxis dataKey="date" stroke="#6a7a9a" fontSize={9} />
+                        <YAxis stroke="#6a7a9a" fontSize={9} domain={['dataMin - 5', 'dataMax + 5']} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#0b0f1e', border: '1px solid rgba(74,158,255,0.4)' }}
+                          itemStyle={{ color: '#4a9eff' }}
+                          labelStyle={{ color: '#8a9ab8' }}
+                        />
+                        <Line type="monotone" dataKey="maxEst" stroke="#f0c040" strokeWidth={2} dot={{ r: 3, fill: '#0b0f1e', stroke: '#f0c040' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-48 flex items-center justify-center border border-dashed border-sl-border/50">
+                     <p className="font-share text-[10px] text-sl-text-dim tracking-widest">NOT ENOUGH DATA TO GRAPH</p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="bg-sl-surface border border-dashed border-sl-border-strong p-6 text-center">
             <p className="font-share text-xs text-sl-text-dim tracking-widest">LOG SETS WITH WEIGHT &amp; REPS<br/>TO SEE 1RM ESTIMATES</p>
           </div>
         )}
-      </div>
+        </div>
+      </motion.div>
 
       {/* Bodyweight Trend */}
       {bodyweightHistory.length > 1 && (
-        <>
+        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
           <div className="section-title">
             <span className="num">003</span><h2>Bodyweight Trend</h2><div className="line"></div>
           </div>
@@ -191,9 +278,9 @@ const Stats = () => {
               </ResponsiveContainer>
             </div>
           </div>
-        </>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

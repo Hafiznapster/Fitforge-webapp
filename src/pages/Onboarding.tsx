@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import { useDietStore } from '../store/dietStore';
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showAwakening, setShowAwakening] = useState(false);
   
@@ -90,13 +92,31 @@ const Onboarding = () => {
     }
   };
 
+  const variants = {
+    initial: (dir: number) => ({ opacity: 0, x: dir > 0 ? 20 : -20 }),
+    animate: { opacity: 1, x: 0 },
+    exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -20 : 20 })
+  };
+
+  const handleNext = (nextStep: number) => { setDirection(1); setStep(nextStep); };
+  const handleBack = (prevStep: number) => { setDirection(-1); setStep(prevStep); };
+
   return (
-    <div className="min-h-screen bg-sl-bg p-4 flex flex-col justify-center">
-      <div className="header-badge mb-8">SYSTEM INITIALIZATION</div>
+    <div className="min-h-screen bg-sl-bg p-4 flex flex-col justify-center max-w-md mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div className="header-badge mb-0">SYSTEM INITIALIZATION</div>
+        <span className="font-share text-sl-text-dim text-[10px] tracking-widest">STEP {step}/4</span>
+      </div>
       
-      <AnimatePresence mode="wait">
+      <div className="flex gap-2 mb-8">
+        {[1, 2, 3, 4].map(s => (
+          <div key={s} className={`h-1 flex-1 ${s <= step ? 'bg-sl-blue shadow-[0_0_8px_rgba(74,158,255,0.8)]' : 'bg-sl-surface'}`}></div>
+        ))}
+      </div>
+      
+      <AnimatePresence mode="wait" custom={direction}>
         {step === 1 && (
-          <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+          <motion.div key="step1" custom={direction} variants={variants} initial="initial" animate="animate" exit="exit">
             <h2 className="text-2xl font-rajdhani text-white font-bold tracking-[4px] mb-6">HUNTER IDENTITY</h2>
             
             <div className="space-y-4">
@@ -106,102 +126,120 @@ const Onboarding = () => {
               </div>
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">CHOOSE CLASS</label>
-                <select value={playerClass} onChange={(e) => setPlayerClass(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue appearance-none">
-                  <option>Fighter</option>
-                  <option>Assassin</option>
-                  <option>Tank</option>
-                  <option>Mage</option>
-                </select>
+                <div className="relative">
+                  <select value={playerClass} onChange={(e) => setPlayerClass(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue appearance-none">
+                    <option>Fighter</option>
+                    <option>Assassin</option>
+                    <option>Tank</option>
+                    <option>Mage</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+                </div>
               </div>
             </div>
-            <button onClick={() => setStep(2)} className="w-full mt-8 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px] hover:bg-sl-blue/20">NEXT: METRICS</button>
+            <button onClick={() => handleNext(2)} className="w-full mt-8 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px] hover:bg-sl-blue/20">NEXT: METRICS</button>
           </motion.div>
         )}
 
         {step === 2 && (
-          <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+          <motion.div key="step2" custom={direction} variants={variants} initial="initial" animate="animate" exit="exit">
             <h2 className="text-2xl font-rajdhani text-white font-bold tracking-[4px] mb-6">PHYSICAL METRICS</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">WEIGHT (KG)</label>
-                <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue" />
+                <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">WEIGHT</label>
+                <div className="relative">
+                  <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim font-share text-[10px]">KG</span>
+                </div>
               </div>
               <div>
-                <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">HEIGHT (CM)</label>
-                <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue" />
+                <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">HEIGHT</label>
+                <div className="relative">
+                  <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim font-share text-[10px]">CM</span>
+                </div>
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setStep(1)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px]">BACK</button>
+              <button onClick={() => handleBack(1)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px] hover:bg-sl-surface transition-colors">BACK</button>
               <button onClick={() => {
                 if (!weight || !height) {
                   setStep2Error('Weight and height are required.');
                   return;
                 }
                 setStep2Error('');
-                setStep(3);
-              }} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px]">NEXT: GOALS</button>
+                handleNext(3);
+              }} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px] hover:bg-sl-blue/20">NEXT: GOALS</button>
             </div>
             {step2Error && <p className="text-red-500 font-share text-xs mt-2 tracking-widest">{step2Error}</p>}
           </motion.div>
         )}
 
         {step === 3 && (
-          <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+          <motion.div key="step3" custom={direction} variants={variants} initial="initial" animate="animate" exit="exit">
             <h2 className="text-2xl font-rajdhani text-white font-bold tracking-[4px] mb-6">COMBAT OBJECTIVES</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">PRIMARY GOAL</label>
-                <select value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue appearance-none">
-                  <option>Muscle Building</option>
-                  <option>Fat Loss</option>
-                  <option>Maintenance & Strength</option>
-                </select>
+                <div className="relative">
+                  <select value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue appearance-none">
+                    <option>Muscle Building</option>
+                    <option>Fat Loss</option>
+                    <option>Maintenance & Strength</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">RAID FREQUENCY</label>
-                <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue appearance-none">
-                  <option>3x a week</option>
-                  <option>4x a week</option>
-                  <option>5x a week</option>
-                  <option>6x a week</option>
-                </select>
+                <div className="relative">
+                  <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue appearance-none">
+                    <option>3x a week</option>
+                    <option>4x a week</option>
+                    <option>5x a week</option>
+                    <option>6x a week</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">INTENSITY PREFERENCE</label>
-                <select value={intensity} onChange={(e) => setIntensity(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue appearance-none">
-                  <option>Heavy (Low Reps, Max Strength)</option>
-                  <option>Moderate (Hypertrophy)</option>
-                  <option>Light (High Reps, Endurance)</option>
-                </select>
+                <div className="relative">
+                  <select value={intensity} onChange={(e) => setIntensity(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 pr-10 font-share outline-none focus:border-sl-blue appearance-none">
+                    <option>Heavy (Low Reps, Max Strength)</option>
+                    <option>Moderate (Hypertrophy)</option>
+                    <option>Light (High Reps, Endurance)</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+                </div>
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setStep(2)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px]">BACK</button>
-              <button onClick={() => setStep(4)} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px]">NEXT: ARSENAL</button>
+              <button onClick={() => handleBack(2)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px] hover:bg-sl-surface transition-colors">BACK</button>
+              <button onClick={() => handleNext(4)} className="w-2/3 bg-sl-blue/10 border border-sl-blue text-sl-blue py-3 font-share tracking-[3px] hover:bg-sl-blue/20 transition-colors">NEXT: ARSENAL</button>
             </div>
           </motion.div>
         )}
 
         {step === 4 && (
-          <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+          <motion.div key="step4" custom={direction} variants={variants} initial="initial" animate="animate" exit="exit">
             <h2 className="text-2xl font-rajdhani text-white font-bold tracking-[4px] mb-6">ARSENAL & HISTORY</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">SUPPLEMENTS (COMMA SEPARATED)</label>
-                <input type="text" value={supplements} onChange={(e) => setSupplements(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue" placeholder="e.g. Whey Protein, Creatine" />
+                <input type="text" value={supplements} onChange={(e) => setSupplements(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue transition-colors" placeholder="e.g. Whey Protein, Creatine" />
               </div>
               <div>
                 <label className="font-share text-[10px] text-sl-text-dim tracking-widest block mb-1">CURRENT WORKOUT PLAN (IF ANY)</label>
-                <textarea value={currentPlan} onChange={(e) => setCurrentPlan(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue h-24 resize-none" placeholder="e.g. Bro Split, PPL, or None"></textarea>
+                <textarea value={currentPlan} onChange={(e) => setCurrentPlan(e.target.value)} className="w-full bg-sl-surface border border-sl-border text-white p-3 font-share outline-none focus:border-sl-blue transition-colors h-24 resize-none" placeholder="e.g. Bro Split, PPL, or None"></textarea>
               </div>
             </div>
             <div className="flex gap-4 mt-8">
-              <button onClick={() => setStep(3)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px]" disabled={loading}>BACK</button>
-              <button onClick={handleComplete} disabled={loading} className="w-2/3 bg-sl-gold/10 border border-sl-gold text-sl-gold py-3 font-share tracking-[3px] disabled:opacity-50">
+              <button onClick={() => handleBack(3)} className="w-1/3 border border-sl-border text-sl-text-dim py-3 font-share tracking-[3px] hover:bg-sl-surface transition-colors" disabled={loading}>BACK</button>
+              <button onClick={handleComplete} disabled={loading} className="w-2/3 bg-sl-gold/10 border border-sl-gold text-sl-gold py-3 font-share tracking-[3px] disabled:opacity-50 hover:bg-sl-gold/20 transition-colors flex justify-center items-center">
                 {loading ? 'SAVING...' : 'AWAKEN SYSTEM'}
               </button>
             </div>
