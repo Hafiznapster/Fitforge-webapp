@@ -28,15 +28,19 @@ const Dashboard = () => {
 
   const handleCompleteQuest = (id: string) => {
     const quest = dailyQuests.find(q => q.id === id);
-    // Only celebrate when going from incomplete → complete
-    if (quest && !quest.completed) {
+    if (!quest) return;
+
+    if (!quest.completed) {
       gainXp(50);
       setShowQuestClear(true);
       if (questTimerRef.current) clearTimeout(questTimerRef.current);
       questTimerRef.current = setTimeout(() => {
         setShowQuestClear(false);
       }, 2000);
+    } else {
+      gainXp(-50);
     }
+    
     toggleQuest(id);
   };
 
@@ -160,7 +164,7 @@ const Dashboard = () => {
               <motion.div 
                 className="h-full bg-sl-blue shadow-[0_0_8px_rgba(74,158,255,0.8)]"
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min((xp / useUserStore.getState().xpNeeded) * 100, 100)}%` }}
+                animate={{ width: `${Math.max(0, Math.min((xp / useUserStore.getState().xpNeeded) * 100, 100))}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
