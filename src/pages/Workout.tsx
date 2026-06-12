@@ -23,6 +23,7 @@ const Workout = () => {
   // Selection State
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
+  const [customDate, setCustomDate] = useState<string>('');
 
   // Cleanup rest timer on unmount
   useEffect(() => {
@@ -118,7 +119,7 @@ const Workout = () => {
       }));
       return { id: `ex-${idx}`, name: ex.name, sets: generatedSets };
     });
-    startWorkout(`W${selectedWeek}D${selectedDay}: ${dayData.type}`, initialExercises);
+    startWorkout(`W${selectedWeek}D${selectedDay}: ${dayData.type}`, initialExercises, customDate || undefined);
   };
 
   if (!activeWorkout) {
@@ -171,6 +172,11 @@ const Workout = () => {
                 )) || <p className="text-xs text-sl-text-dim font-share tracking-widest">Rest Day Protocol.</p>}
               </div>
             </div>
+            <div className="mb-6">
+              <label className="text-xs font-share text-sl-text-dim tracking-widest mb-2 block">OVERRIDE DATE (OPTIONAL)</label>
+              <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
+                className="w-full bg-sl-bg border border-sl-border text-white p-3 font-share text-sm outline-none focus:border-sl-blue" />
+            </div>
             <button onClick={initiatePlanRaid}
               disabled={!savedPlan.weeks.find(w => w.weekNumber === selectedWeek)?.days.find(d => d.day === selectedDay)?.exercises?.length}
               className="w-full bg-sl-blue/10 border border-sl-blue text-sl-blue font-share tracking-[4px] font-bold py-4 hover:bg-sl-blue hover:text-sl-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -178,18 +184,17 @@ const Workout = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 text-center mt-8">
-            <p className="text-sl-text-mid font-share tracking-widest mb-4">NO ACTIVE DIRECTIVE</p>
-            <div className="flex gap-2 justify-center">
-              <button onClick={() => startWorkout('Free Raid', [])}
-                className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors">
-                START FREE RAID
-              </button>
-              <button onClick={() => navigate('/calendar')}
-                className="bg-sl-surface border border-sl-border text-sl-text-dim px-6 py-3 font-share tracking-widest text-xs hover:border-sl-text-dim hover:text-white transition-colors">
-                VIEW HISTORY
-              </button>
+          <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 mt-8 space-y-6">
+            <p className="text-sl-text-mid font-share tracking-widest text-center">NO ACTIVE DIRECTIVE</p>
+            <div>
+              <label className="text-xs font-share text-sl-text-dim tracking-widest mb-2 block">OVERRIDE DATE (OPTIONAL)</label>
+              <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
+                className="w-full bg-sl-bg border border-sl-border text-white p-3 font-share text-sm outline-none focus:border-sl-blue" />
             </div>
+            <button onClick={() => startWorkout('FREE RAID', [], customDate || undefined)}
+              className="w-full bg-sl-blue/10 border border-sl-blue text-sl-blue py-4 font-share tracking-[3px] text-lg hover:bg-sl-blue hover:text-sl-bg transition-colors shadow-[0_0_20px_rgba(74,158,255,0.2)]">
+              INITIALIZE EMPTY RAID
+            </button>
           </div>
         )}
       </div>

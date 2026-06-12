@@ -26,12 +26,13 @@ interface WorkoutState {
   activeWorkout: string | null;
   exercises: Exercise[];
   startTime: string | null;
+  customDate: string | null;
   workoutHistory: WorkoutHistoryEntry[];
   addSet: (exerciseId: string, set: WorkoutSet) => void;
   deleteSet: (exerciseId: string, setId: string) => void;
   updateSet: (exerciseId: string, setId: string, updates: Partial<WorkoutSet>) => void;
   addExercise: (exercise: Exercise) => void;
-  startWorkout: (type: string, initialExercises?: Exercise[]) => void;
+  startWorkout: (type: string, initialExercises?: Exercise[], customDate?: string) => void;
   finishWorkout: () => void;
   abandonWorkout: () => void;
 }
@@ -42,6 +43,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       activeWorkout: null,
       exercises: [],
       startTime: null,
+      customDate: null,
       workoutHistory: [],
   addSet: (exerciseId, newSet) =>
     set((state) => ({
@@ -67,14 +69,21 @@ export const useWorkoutStore = create<WorkoutState>()(
       ),
     })),
   addExercise: (exercise) => set((state) => ({ exercises: [...state.exercises, exercise] })),
-  startWorkout: (type, initialExercises = []) => set({ activeWorkout: type, exercises: initialExercises, startTime: new Date().toISOString() }),
+  startWorkout: (type, initialExercises = [], customDate) => set({ activeWorkout: type, exercises: initialExercises, startTime: new Date().toISOString(), customDate: customDate || null }),
   finishWorkout: () => set((state) => {
-    if (!state.activeWorkout) return { activeWorkout: null, exercises: [], startTime: null };
+    if (!state.activeWorkout) return { activeWorkout: null, exercises: [], startTime: null, customDate: null };
     const completedExercises = state.exercises.filter(ex => ex.sets.some(s => s.completed));
-    if (completedExercises.length === 0) return { activeWorkout: null, exercises: [], startTime: null };
+    if (completedExercises.length === 0) return { activeWorkout: null, exercises: [], startTime: null, customDate: null };
+    
+    // Create an ISO string for the custom date at 12:00 PM to avoid timezone issues, or use current time
+    let finalDate = new Date().toISOString();
+    if (state.customDate) {
+      finalDate = new Date(`${state.customDate}T12:00:00Z`).toISOString();
+    }
+    
     const historyEntry: WorkoutHistoryEntry = {
       id: crypto.randomUUID(),
-      date: new Date().toISOString(),
+      date: finalDate,
       type: state.activeWorkout,
       exercises: completedExercises,
     };
@@ -82,10 +91,11 @@ export const useWorkoutStore = create<WorkoutState>()(
       activeWorkout: null,
       exercises: [],
       startTime: null,
+      customDate: null,
       workoutHistory: [...state.workoutHistory, historyEntry],
     };
   }),
-  abandonWorkout: () => set({ activeWorkout: null, exercises: [], startTime: null }),
+  abandonWorkout: () => set({ activeWorkout: null, exercises: [], startTime: null, customDate: null }),
 }),
 {
   name: 'fitforge-workout-storage',

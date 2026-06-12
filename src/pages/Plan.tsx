@@ -5,6 +5,7 @@ import { useDietStore } from '../store/dietStore';
 import { generateWorkoutPlan } from '../services/aiService';
 import type { GeneratedPlan } from '../services/aiService';
 import { motion } from 'framer-motion';
+import ManualPlanBuilder from '../components/ManualPlanBuilder';
 
 const Plan = () => {
   const { rank, savePlan } = useUserStore();
@@ -13,6 +14,7 @@ const Plan = () => {
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isBuildingManual, setIsBuildingManual] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -28,9 +30,22 @@ const Plan = () => {
     }
   };
 
+  if (isBuildingManual) {
+    return (
+      <div className="max-w-md mx-auto p-4 relative pb-24">
+        <ManualPlanBuilder 
+          onSave={(p) => {
+            setPlan(p);
+            setIsBuildingManual(false);
+          }} 
+          onCancel={() => setIsBuildingManual(false)} 
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-md mx-auto p-4 relative">
+    <div className="max-w-md mx-auto p-4 relative pb-24">
       <div className="header-badge mt-6">COMMAND CENTER</div>
 
       <div className="flex justify-between items-end mb-6">
@@ -42,13 +57,21 @@ const Plan = () => {
             4-WEEK TRAINING BLOCK
           </p>
         </div>
-        <button 
-          onClick={handleGenerate}
-          disabled={loading}
-          className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-3 py-2 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors disabled:opacity-50"
-        >
-          {loading ? 'GENERATING...' : 'GENERATE PLAN'}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button 
+            onClick={handleGenerate}
+            disabled={loading}
+            className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-3 py-2 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors disabled:opacity-50"
+          >
+            {loading ? 'GENERATING...' : 'AI GEN PLAN'}
+          </button>
+          <button 
+            onClick={() => setIsBuildingManual(true)}
+            className="bg-transparent border border-sl-border text-white px-3 py-2 font-share tracking-widest text-xs hover:border-sl-gold hover:text-sl-gold transition-colors"
+          >
+            MANUAL BUILD
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -129,15 +152,23 @@ const Plan = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 text-center mt-8">
-          <p className="text-sl-text-mid font-share tracking-widest mb-4">NO ACTIVE DIRECTIVE</p>
-          <button 
-            onClick={handleGenerate}
-            disabled={loading}
-            className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'ANALYZING METRICS...' : 'INITIALIZE GENERATION'}
-          </button>
+        <div className="bg-sl-surface border border-dashed border-sl-border-strong p-8 text-center mt-8 space-y-4">
+          <p className="text-sl-text-mid font-share tracking-widest">NO ACTIVE DIRECTIVE</p>
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={handleGenerate}
+              disabled={loading}
+              className="bg-sl-blue/10 border border-sl-blue text-sl-blue px-6 py-3 font-share tracking-widest text-xs hover:bg-sl-blue/20 transition-colors disabled:opacity-50"
+            >
+              {loading ? 'ANALYZING METRICS...' : 'INITIALIZE AI GENERATION'}
+            </button>
+            <button 
+              onClick={() => setIsBuildingManual(true)}
+              className="bg-transparent border border-sl-border text-white px-6 py-3 font-share tracking-widest text-xs hover:border-sl-gold hover:text-sl-gold transition-colors"
+            >
+              BUILD CUSTOM PLAN
+            </button>
+          </div>
         </div>
       )}
     </div>
