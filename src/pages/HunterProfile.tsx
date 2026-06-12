@@ -8,7 +8,7 @@ import { supabase } from '../services/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const HunterProfile = () => {
-  const { rank, level, xp, xpNeeded, name, playerClass, age, streak, updateProfile, stats, statPoints, allocateStat } = useUserStore();
+  const { rank, level, xp, xpNeeded, name, playerClass, age, streak, updateProfile, stats, statPoints, allocateStat, titles, activeTitle, streakFreezes, buyStreakFreeze, setActiveTitle } = useUserStore();
   const { workoutHistory } = useWorkoutStore();
   const { waterMl } = useDietStore();
   const navigate = useNavigate();
@@ -100,6 +100,9 @@ const HunterProfile = () => {
       
       <div className="text-center mb-8 relative">
         <h1 className="text-3xl font-bold text-white tracking-[4px] mb-1">{name.toUpperCase()}</h1>
+        <p className="font-share text-sl-gold tracking-[3px] text-xs mb-2">
+          {activeTitle ? `"${activeTitle.toUpperCase()}"` : ''}
+        </p>
         <p className="font-share text-sl-blue tracking-[2px] text-sm">
           {playerClass.toUpperCase()} | AGE: {age || '?'}
         </p>
@@ -187,7 +190,45 @@ const HunterProfile = () => {
       </div>
 
       <div className="section-title">
-        <span className="num">002</span><h2>System Commands</h2><div className="line"></div>
+        <span className="num">002</span><h2>Inventory & Titles</h2><div className="line"></div>
+      </div>
+      
+      <div className="bg-sl-surface border border-sl-border p-4 mb-8">
+        <div className="flex justify-between items-center border-b border-sl-border/50 pb-4 mb-4">
+          <div>
+            <h3 className="font-rajdhani text-lg font-bold text-white tracking-[2px]">STREAK FREEZE</h3>
+            <p className="font-share text-[10px] text-sl-text-dim tracking-widest mt-1">Prevents streak loss on missed days.</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <span className="font-rajdhani text-2xl font-bold text-sl-teal">x{streakFreezes}</span>
+            <button 
+              onClick={buyStreakFreeze}
+              disabled={xp < 500}
+              className="px-3 py-1 bg-sl-blue/10 border border-sl-blue text-sl-blue font-share text-[10px] tracking-widest hover:bg-sl-blue hover:text-sl-bg transition-colors disabled:opacity-50 disabled:border-sl-border disabled:text-sl-text-dim disabled:bg-transparent"
+            >
+              BUY (-500 XP)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-rajdhani text-lg font-bold text-white tracking-[2px] mb-3">EQUIPPED TITLE</h3>
+          <div className="relative">
+            <select 
+              value={activeTitle || ''} 
+              onChange={(e) => setActiveTitle(e.target.value || null)}
+              className="w-full bg-sl-bg border border-sl-border text-sl-gold p-3 font-share text-sm outline-none focus:border-sl-gold appearance-none"
+            >
+              <option value="">No Title</option>
+              {titles.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-sl-text-dim pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      <div className="section-title">
+        <span className="num">003</span><h2>System Commands</h2><div className="line"></div>
       </div>
 
       <div className="flex flex-col gap-3">

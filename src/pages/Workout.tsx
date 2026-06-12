@@ -25,8 +25,11 @@ const Workout = () => {
   const [selectedDay, setSelectedDay] = useState(1);
   const [customDate, setCustomDate] = useState<string>('');
 
-  // Cleanup rest timer on unmount
+  // Cleanup rest timer on unmount and request notification permission
   useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
     return () => {
       if (restInterval.current) clearInterval(restInterval.current);
     };
@@ -52,6 +55,10 @@ const Workout = () => {
         const completedSets = match.sets.filter(s => s.completed);
         if (completedSets.length > 0) {
           const maxWeightSet = completedSets.reduce((prev, current) => (Number(prev.weight) > Number(current.weight)) ? prev : current);
+          const weight = Number(maxWeightSet.weight);
+          if (weight > 0) {
+            return `PREV: ${weight}KG × ${maxWeightSet.reps} | TARGET: ${weight + 2.5}KG`;
+          }
           return `PREV: ${maxWeightSet.weight}KG × ${maxWeightSet.reps}`;
         }
       }
@@ -66,6 +73,16 @@ const Workout = () => {
       setRestSeconds(prev => {
         if (prev === null || prev <= 1) {
           clearInterval(restInterval.current!);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Rest Complete', {
+              body: 'Time to hit your next set, Hunter.',
+              icon: '/vite.svg', // Fallback icon
+              vibrate: [200, 100, 200, 100, 500]
+            } as any);
+          }
+          if (navigator.vibrate) {
+             navigator.vibrate([200, 100, 200, 100, 500]);
+          }
           return null;
         }
         return prev - 1;

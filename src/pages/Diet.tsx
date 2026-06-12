@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useDietStore } from '../store/dietStore';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import BarcodeScanner from '../components/BarcodeScanner';
+import { ScanBarcode } from 'lucide-react';
 
 const MacroRing = ({ value, max, label, colorClass }: { value: number, max: number, label: string, colorClass: string }) => {
   const percentage = Math.min((value / max) * 100, 100);
@@ -64,6 +66,7 @@ const Diet = () => {
   const [c, setC] = useState('');
   const [f, setF] = useState('');
   const [bw, setBw] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     diet.checkDailyReset();
@@ -120,8 +123,16 @@ const Diet = () => {
         </div>
       </div>
 
-      <div className="section-title">
-        <span className="num">001</span><h2>Log Meal</h2><div className="line"></div>
+      <div className="section-title flex justify-between items-end">
+        <div>
+          <span className="num">001</span><h2>Log Meal</h2>
+        </div>
+        <button 
+          onClick={() => setShowScanner(true)}
+          className="font-share text-xs tracking-widest text-sl-blue border border-sl-blue px-2 py-1 flex items-center gap-2 hover:bg-sl-blue hover:text-sl-bg transition-colors"
+        >
+          <ScanBarcode size={14} /> SCAN BARCODE
+        </button>
       </div>
 
       <form onSubmit={handleAddMeal} className="bg-sl-surface border border-sl-border p-4 mb-6">
@@ -228,6 +239,18 @@ const Diet = () => {
           + 250 ML WATER
         </button>
       </div>
+      {showScanner && (
+        <BarcodeScanner 
+          onClose={() => setShowScanner(false)}
+          onResult={(result) => {
+            setMealName(result.name);
+            setP(result.protein.toString());
+            setC(result.carbs.toString());
+            setF(result.fat.toString());
+            setShowScanner(false);
+          }}
+        />
+      )}
     </div>
   );
 };

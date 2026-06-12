@@ -31,11 +31,17 @@ interface UserState {
     INT: number;
   };
   savedPlan: GeneratedPlan | null;
+  streakFreezes: number;
+  titles: string[];
+  activeTitle: string | null;
   gainXp: (amount: number) => void;
   checkDailyReset: () => void;
   toggleQuest: (id: string) => void;
   toggleTheme: () => void;
   allocateStat: (statName: keyof UserState['stats']) => void;
+  buyStreakFreeze: () => void;
+  setActiveTitle: (title: string | null) => void;
+  checkAchievements: () => void;
   savePlan: (plan: GeneratedPlan | null) => void;
   updateProfile: (name: string, age: number | null, playerClass: string) => void;
   syncToSupabase: () => void;
@@ -70,6 +76,9 @@ export const useUserStore = create<UserState>()(
         INT: 10,
       },
       savedPlan: null,
+      streakFreezes: 0,
+      titles: ['Awakened Hunter'],
+      activeTitle: 'Awakened Hunter',
       updateProfile: (name, age, playerClass) => set({ name, age, playerClass }),
       savePlan: (plan) => set({ savedPlan: plan }),
       syncToSupabase: async () => {
@@ -127,20 +136,49 @@ export const useUserStore = create<UserState>()(
           const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
           
           let newStreak = state.streak;
+          let newFreezes = state.streakFreezes;
+
           if (allCompleted && diffDays === 1) {
             newStreak += 1;
           } else if (!allCompleted || diffDays > 1) {
-            newStreak = 0;
+            // Streak broken. Check if we have freezes
+            const missedDays = diffDays > 0 ? diffDays - 1 : 1; // Number of un-logged days
+            const totalFreezesNeeded = (!allCompleted ? 1 : 0) + missedDays;
+
+            if (newFreezes >= totalFreezesNeeded) {
+              newFreezes -= totalFreezesNeeded;
+              // Streak preserved!
+            } else {
+              newStreak = 0;
+            }
           }
 
           set({
             lastLoginDate: today,
             dailyQuests: generateDailyQuests(),
-            streak: newStreak
+            streak: newStreak,
+            streakFreezes: newFreezes
           });
+          get().checkAchievements();
           setTimeout(() => get().syncToSupabase(), 0);
         }
       },
+      buyStreakFreeze: () => set((state) => {
+        if (state.xp >= 500) {
+          return { xp: state.xp - 500, streakFreezes: state.streakFreezes + 1 };
+        }
+        return {};
+      }),
+      setActiveTitle: (title) => set({ activeTitle: title }),
+      checkAchievements: () => set((state) => {
+        const newTitles = new Set(state.titles);
+        if (state.streak >= 7) newTitles.add('Consistent Crawler');
+        if (state.streak >= 30) newTitles.add('Iron Monarch');
+        if (state.level >= 10) newTitles.add('Elite Hunter');
+        if (state.level >= 50) newTitles.add('National Level Hunter');
+        
+        return { titles: Array.from(newTitles) };
+      }),
       toggleQuest: (id) => set((state) => {
         const newQuests = state.dailyQuests.map(q => {
           if (q.id === id) {
