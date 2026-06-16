@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Home, Dumbbell, User, Calendar, Utensils, MessageSquare } from 'lucide-react';
+import { Home, Dumbbell, User, Calendar, Utensils, MessageSquare, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MainLayout = () => {
@@ -8,6 +8,7 @@ const MainLayout = () => {
     { to: '/', icon: Home, label: 'HQ' },
     { to: '/active-plan', icon: Calendar, label: 'PLAN' },
     { to: '/workout', icon: Dumbbell, label: 'RAID' },
+    { to: '/skill-tree', icon: Zap, label: 'SKILLS' },
     { to: '/diet', icon: Utensils, label: 'DIET' },
     { to: '/coach', icon: MessageSquare, label: 'COACH' },
     { to: '/hunter', icon: User, label: 'HUNTER' },

@@ -22,6 +22,10 @@ create table profiles (
   workout_intensity text,
   current_plan text,
 
+  -- Calisthenics & Skills
+  unlocked_skills text[] default '{}',
+  skill_tree_progress jsonb default '{}',
+
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

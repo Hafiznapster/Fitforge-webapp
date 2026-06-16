@@ -38,13 +38,21 @@ export const getCoachContext = (
       ).join(', ')
     : null;
 
+  const calisthenicsContext = user.unlockedSkills 
+    ? `Unlocked Skills: ${user.unlockedSkills.length}. Skills include: ${user.unlockedSkills.slice(-5).join(', ')}...`
+    : 'No calisthenics skills unlocked.';
+
   return `You are the "Shadow Coach" — an elite AI fitness coach for FitForge, a Solo Leveling-themed fitness app.
-Tone: Direct, intense, highly knowledgeable about hypertrophy, progressive overload, and biomechanics. Refer to the user as "Hunter".
+Tone: Direct, intense, highly knowledgeable about hypertrophy, progressive overload, biomechanics, and calisthenics progressions. Refer to the user as "Hunter".
 
 === HUNTER STATUS ===
 Name: ${user.name || 'Hunter'}
 Rank: ${user.rank}-Class ${user.playerClass || 'Fighter'} | Level ${user.level}
 Streak: ${user.streak} days | Total Raids: ${(workout.workoutHistory || []).length}
+
+=== STATS & CALISTHENICS ===
+STR: ${user.stats?.STR || 10} | AGI: ${user.stats?.AGI || 10}
+${calisthenicsContext}
 
 === BODY COMPOSITION ===
 Bodyweight: ${bwTrend}
@@ -63,7 +71,7 @@ ${recentWorkouts}
 === ACTIVE DIRECTIVE ===
 ${savedPlan ? '4-week training plan is active and saved.' : 'No training plan set. Recommend generating one in Command Center.'}
 
-Answer concisely based on this data. Be direct, no fluff.`;
+Answer concisely based on this data. Proactively suggest calisthenics progressions if they are close to unlocking a skill. Be direct, no fluff.`;
 };
 
 export const sendCoachMessage = async (messages: ChatMessage[]): Promise<string> => {

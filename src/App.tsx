@@ -16,6 +16,9 @@ import CalendarView from './pages/CalendarView';
 import Settings from './pages/Settings';
 import HunterProfile from './pages/HunterProfile';
 import ActivePlan from './pages/ActivePlan';
+import { lazy, Suspense } from 'react';
+
+const SkillTree = lazy(() => import('./pages/SkillTree'));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -142,6 +145,7 @@ function App() {
             <Route path="workout" element={<Workout />} />
             <Route path="diet" element={<Diet />} />
             <Route path="coach" element={<Coach />} />
+            <Route path="skill-tree" element={<Suspense fallback={<div className="min-h-screen flex items-center justify-center text-sl-blue font-share tracking-widest">LOADING SKILL TREE...</div>}><SkillTree /></Suspense>} />
             <Route path="hunter" element={<HunterProfile />} />
             <Route path="stats" element={<Stats />} />
             <Route path="calendar" element={<CalendarView />} />

@@ -45,14 +45,44 @@ interface UserState {
   savePlan: (plan: GeneratedPlan | null) => void;
   updateProfile: (name: string, age: number | null, playerClass: string) => void;
   syncToSupabase: () => void;
+  unlockedSkills: string[];
+  skillTreeProgress: {
+    [exerciseId: string]: {
+      bestReps?: number;
+      bestDurationSeconds?: number;
+      totalSessions?: number;
+    }
+  };
+  updateSkillProgress: (exerciseId: string, reps?: number, duration?: number) => void;
+  unlockSkill: (exerciseId: string) => void;
 }
 
-// TODO: Make this dynamic based on diet targets and active plan
-const generateDailyQuests = (): Quest[] => [
-  { id: '1', desc: 'Hit daily protein target', completed: false },
-  { id: '2', desc: 'Complete workout session', completed: false },
-  { id: '3', desc: 'Hit daily water goal', completed: false },
+const callisthenicsQuestTemplates = [
+  { text: 'Hold an L-Sit for 3×10 seconds', requires: 'l_sit_parallel' },
+  { text: 'Complete 5×10 Pull-ups', requires: 'pull_up' },
+  { text: 'Practice Handstand wall hold for 60 total seconds', requires: 'wall_handstand_hold' },
+  { text: 'Log 3 sets of Muscle-up attempts', requires: 'muscle_up_kipping' },
+  { text: 'Hold a Plank for 60 seconds', requires: 'plank' },
+  { text: 'Do 30 Standard Push-ups', requires: 'push_up' }
 ];
+
+export const generateDailyQuests = (unlockedSkills: string[] = []): Quest[] => {
+  const baseQuests: Quest[] = [
+    { id: '1', desc: 'Hit daily protein target', completed: false },
+    { id: '2', desc: 'Complete workout session', completed: false },
+    { id: '3', desc: 'Hit daily water goal', completed: false },
+  ];
+
+  const eligibleCalisthenics = callisthenicsQuestTemplates.filter(q => unlockedSkills.includes(q.requires));
+  
+  if (eligibleCalisthenics.length > 0) {
+    // Pick a random eligible calisthenics quest
+    const randomQuest = eligibleCalisthenics[Math.floor(Math.random() * eligibleCalisthenics.length)];
+    baseQuests.push({ id: '4', desc: randomQuest.text, completed: false });
+  }
+
+  return baseQuests;
+};
 
 export const useUserStore = create<UserState>()(
   persist(
@@ -66,7 +96,7 @@ export const useUserStore = create<UserState>()(
       xpNeeded: 1000,
       streak: 0,
       lastLoginDate: new Date().toISOString().split('T')[0],
-      dailyQuests: generateDailyQuests(),
+      dailyQuests: generateDailyQuests(['wall_push_up', 'dead_hang', 'dead_bug', 'wall_sit']),
       theme: 'default',
       statPoints: 0,
       stats: {
@@ -79,6 +109,27 @@ export const useUserStore = create<UserState>()(
       streakFreezes: 0,
       titles: ['Awakened Hunter'],
       activeTitle: 'Awakened Hunter',
+      unlockedSkills: ['wall_push_up', 'dead_hang', 'dead_bug', 'wall_sit'], // E-rank basics unlocked by default
+      skillTreeProgress: {},
+      updateSkillProgress: (exerciseId, reps, duration) => set((state) => {
+        const currentProgress = state.skillTreeProgress[exerciseId] || { totalSessions: 0 };
+        return {
+          skillTreeProgress: {
+            ...state.skillTreeProgress,
+            [exerciseId]: {
+              bestReps: Math.max(currentProgress.bestReps || 0, reps || 0),
+              bestDurationSeconds: Math.max(currentProgress.bestDurationSeconds || 0, duration || 0),
+              totalSessions: (currentProgress.totalSessions || 0) + 1,
+            }
+          }
+        };
+      }),
+      unlockSkill: (exerciseId) => set((state) => {
+        if (!state.unlockedSkills.includes(exerciseId)) {
+          return { unlockedSkills: [...state.unlockedSkills, exerciseId] };
+        }
+        return state;
+      }),
       updateProfile: (name, age, playerClass) => set({ name, age, playerClass }),
       savePlan: (plan) => set({ savedPlan: plan }),
       syncToSupabase: async () => {
@@ -94,6 +145,8 @@ export const useUserStore = create<UserState>()(
               level: state.level,
               xp: state.xp,
               streak: state.streak,
+              unlocked_skills: state.unlockedSkills,
+              skill_tree_progress: state.skillTreeProgress
             }).eq('id', session.user.id);
           }
         } catch (e) {
@@ -155,7 +208,7 @@ export const useUserStore = create<UserState>()(
 
           set({
             lastLoginDate: today,
-            dailyQuests: generateDailyQuests(),
+            dailyQuests: generateDailyQuests(state.unlockedSkills),
             streak: newStreak,
             streakFreezes: newFreezes
           });

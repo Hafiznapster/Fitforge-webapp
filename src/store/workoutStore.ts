@@ -3,15 +3,19 @@ import { persist } from 'zustand/middleware';
 
 export interface WorkoutSet {
   id: string;
-  reps: string | number;
-  weight: number;
-  rpe: number;
+  exerciseId?: string;
+  reps?: number | string;
+  weight?: number;
+  durationSeconds?: number;
+  isSuccess?: boolean;
+  rpe?: number;
   completed: boolean;
 }
 
 export interface Exercise {
   id: string;
   name: string;
+  exerciseType?: string;
   sets: WorkoutSet[];
 }
 

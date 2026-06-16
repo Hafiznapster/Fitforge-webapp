@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkoutStore } from '../store/workoutStore';
 import { useUserStore } from '../store/userStore';
+import { calculateWorkoutXP } from '../utils/xpCalculator';
+import { evaluateUnlocksAfterSession } from '../services/skillUnlockService';
+import type { UserStateForUnlocks } from '../services/skillUnlockService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EXERCISE_DATABASE } from '../data/exerciseDatabase';
-import { Trash2 } from 'lucide-react';
 import LevelUpVFX from '../components/LevelUpVFX';
 
 const Workout = () => {
@@ -93,10 +96,51 @@ const Workout = () => {
   const handleFinishWorkout = () => {
     if (isFinishing.current) return;
     isFinishing.current = true;
-    const completedCount = exercises.filter(ex => ex.sets.some(s => s.completed)).length;
-    const xpEarned = Math.max(50, completedCount * 50);
+    
+    // Calculate new XP
+    const xpEarned = calculateWorkoutXP(exercises);
+    
+    // Update skill tree progress and check for unlocks
+    const userState = useUserStore.getState();
+    let bodyweightRepsForSTR = 0;
+    
+    exercises.forEach(ex => {
+      const exerciseDef = EXERCISE_DATABASE.find(e => e.name === ex.name);
+      ex.sets.forEach(set => {
+        if (!set.completed) return;
+        
+        const reps = typeof set.reps === 'string' ? parseInt(set.reps) || 0 : set.reps || 0;
+        const duration = set.durationSeconds || 0;
+        
+        // Accumulate progress
+        userState.updateSkillProgress(ex.name, reps, duration);
+        
+        if (exerciseDef?.exerciseType === 'bodyweight_rep') {
+          bodyweightRepsForSTR += reps;
+        }
+      });
+    });
+    
+    // Add STR bonus if applicable
+    if (bodyweightRepsForSTR > 0) {
+      // In a real app we might want to store a fractional STR pool and only level it when it reaches 1.0, 
+      // but for now we'll keep it simple.
+      console.log(`Earned bonus STR progress for ${bodyweightRepsForSTR} bodyweight reps.`);
+    }
+
+    // Evaluate unlocks
+    const stateForUnlocks: UserStateForUnlocks = {
+      stats: userState.stats,
+      unlockedSkills: userState.unlockedSkills,
+      skillTreeProgress: userState.skillTreeProgress
+    };
+    
+    const newlyUnlocked = evaluateUnlocksAfterSession(stateForUnlocks);
+    newlyUnlocked.forEach(id => userState.unlockSkill(id));
+    
     setShowClear(true);
     gainXp(xpEarned);
+    
     setTimeout(() => {
       finishWorkout();
       navigate('/');
@@ -305,48 +349,129 @@ const Workout = () => {
         </div>
       </div>
 
-      {exercises.map((exercise, index) => (
-        <div key={exercise.id}>
-          <div className="section-title">
-            <span className="num">{(index + 1).toString().padStart(2, '0')}</span>
-            <div className="flex flex-col">
-              <h2>{exercise.name}</h2>
-              <span className="font-share text-[10px] text-sl-blue tracking-widest mt-1 uppercase">{getLastPerformance(exercise.name)}</span>
+      {exercises.map((exercise, index) => {
+        const exerciseDef = EXERCISE_DATABASE.find(e => e.name === exercise.name);
+        const exType = exerciseDef?.exerciseType || 'weighted';
+        
+        return (
+          <div key={exercise.id}>
+            <div className="section-title">
+              <span className="num">{(index + 1).toString().padStart(2, '0')}</span>
+              <div className="flex flex-col">
+                <h2>{exercise.name}</h2>
+                <span className="font-share text-[10px] text-sl-blue tracking-widest mt-1 uppercase">{getLastPerformance(exercise.name)}</span>
+              </div>
+              <div className="line"></div>
             </div>
-            <div className="line"></div>
-          </div>
-          <div className="bg-sl-surface border border-sl-border p-4 mb-6 shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
-            <div className="flex justify-between items-center border-b border-sl-border pb-2 mb-3">
-              <span className="text-[10px] font-share text-sl-text-dim tracking-widest w-8">SET</span>
-              <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">KG</span>
-              <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">REPS</span>
-              <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">RPE</span>
-              <span className="w-8"></span>
-            </div>
-            {exercise.sets.map((set, setIndex) => (
-              <div key={set.id} className="flex justify-between items-center py-2 mt-1 border-b border-sl-border/30 last:border-0">
-                <span className={`font-share w-8 text-sm ${set.completed ? 'text-sl-text-dim' : 'text-sl-blue'}`}>{setIndex + 1}</span>
-                {set.completed ? (
+            <div className="bg-sl-surface border border-sl-border p-4 mb-6 shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+              <div className="flex justify-between items-center border-b border-sl-border pb-2 mb-3">
+                <span className="text-[10px] font-share text-sl-text-dim tracking-widest w-8">SET</span>
+                
+                {exType === 'weighted' && (
                   <>
-                    <span className="text-center w-16 font-share text-sl-text-dim">{set.weight}</span>
-                    <span className="text-center w-16 font-share text-sl-text-dim">{set.reps}</span>
-                    <span className="text-center w-16 font-share text-sl-text-dim">{set.rpe}</span>
-                    <button onClick={() => updateSet(exercise.id, set.id, { completed: false })} className="w-8 text-center text-sl-teal">✓</button>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">KG</span>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">REPS</span>
                   </>
-                ) : (
+                )}
+                {exType === 'bodyweight_rep' && (
                   <>
-                    <input type="number"
-                      className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
-                      placeholder="0" value={set.weight || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, { weight: Number(e.target.value) })} />
-                    <input type="text"
-                      className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
-                      placeholder={String(set.reps)} value={set.reps}
-                      onChange={(e) => updateSet(exercise.id, set.id, { reps: e.target.value })} />
-                    <input type="number"
-                      className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
-                      placeholder="8" value={set.rpe || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, { rpe: Number(e.target.value) })} />
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">+KG(VEST)</span>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">REPS</span>
+                  </>
+                )}
+                {exType === 'bodyweight_hold' && (
+                  <>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">SECONDS</span>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">SETS</span>
+                  </>
+                )}
+                {exType === 'skill_move' && (
+                  <>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">SUCCESS?</span>
+                    <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">SEC(OPT)</span>
+                  </>
+                )}
+                
+                <span className="text-[10px] font-share text-sl-text-dim tracking-widest text-center w-16">RPE</span>
+                <span className="w-8"></span>
+              </div>
+              
+              {exercise.sets.map((set, setIndex) => (
+                <div key={set.id} className="flex justify-between items-center py-2 mt-1 border-b border-sl-border/30 last:border-0">
+                  <span className={`font-share w-8 text-sm ${set.completed ? 'text-sl-text-dim' : 'text-sl-blue'}`}>{setIndex + 1}</span>
+                  
+                  {set.completed ? (
+                    <>
+                      {/* Completed State Rendering */}
+                      {(exType === 'weighted' || exType === 'bodyweight_rep') && (
+                        <>
+                          <span className="text-center w-16 font-share text-sl-text-dim">{set.weight || 0}</span>
+                          <span className="text-center w-16 font-share text-sl-text-dim">{set.reps || 0}</span>
+                        </>
+                      )}
+                      {exType === 'bodyweight_hold' && (
+                        <>
+                          <span className="text-center w-16 font-share text-sl-text-dim">{set.durationSeconds || 0}</span>
+                          <span className="text-center w-16 font-share text-sl-text-dim">{set.reps || 1}</span>
+                        </>
+                      )}
+                      {exType === 'skill_move' && (
+                        <>
+                          <span className="text-center w-16 font-share text-sl-teal font-bold">{set.isSuccess ? 'YES' : 'NO'}</span>
+                          <span className="text-center w-16 font-share text-sl-text-dim">{set.durationSeconds || '-'}</span>
+                        </>
+                      )}
+                      
+                      <span className="text-center w-16 font-share text-sl-text-dim">{set.rpe || '-'}</span>
+                      <button onClick={() => updateSet(exercise.id, set.id, { completed: false })} className="w-8 text-center text-sl-teal">✓</button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Active State Input Rendering */}
+                      {(exType === 'weighted' || exType === 'bodyweight_rep') && (
+                        <>
+                          <input type="number"
+                            className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                            placeholder="0" value={set.weight || ''}
+                            onChange={(e) => updateSet(exercise.id, set.id, { weight: Number(e.target.value) })} />
+                          <input type="text"
+                            className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                            placeholder="0" value={set.reps || ''}
+                            onChange={(e) => updateSet(exercise.id, set.id, { reps: e.target.value })} />
+                        </>
+                      )}
+                      
+                      {exType === 'bodyweight_hold' && (
+                        <>
+                          <input type="number"
+                            className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                            placeholder="0" value={set.durationSeconds || ''}
+                            onChange={(e) => updateSet(exercise.id, set.id, { durationSeconds: Number(e.target.value) })} />
+                          <input type="text"
+                            className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                            placeholder="1" value={set.reps || ''}
+                            onChange={(e) => updateSet(exercise.id, set.id, { reps: e.target.value })} />
+                        </>
+                      )}
+
+                      {exType === 'skill_move' && (
+                        <>
+                          <button 
+                            onClick={() => updateSet(exercise.id, set.id, { isSuccess: !set.isSuccess })}
+                            className={`w-16 py-1 font-share text-xs font-bold border transition-colors ${set.isSuccess ? 'bg-sl-teal/20 border-sl-teal text-sl-teal' : 'bg-sl-bg border-sl-border text-sl-text-dim'}`}>
+                            {set.isSuccess ? 'YES' : 'NO'}
+                          </button>
+                          <input type="number"
+                            className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                            placeholder="0" value={set.durationSeconds || ''}
+                            onChange={(e) => updateSet(exercise.id, set.id, { durationSeconds: Number(e.target.value) })} />
+                        </>
+                      )}
+
+                      <input type="number"
+                        className="w-16 bg-sl-bg border border-sl-border text-center text-white py-1 font-share focus:border-sl-blue outline-none text-sm placeholder:text-sl-text-dim/50"
+                        placeholder="8" value={set.rpe || ''}
+                        onChange={(e) => updateSet(exercise.id, set.id, { rpe: Number(e.target.value) })} />
                       <button
                         onClick={() => { updateSet(exercise.id, set.id, { completed: true }); startRestTimer(90); }}
                         className="w-8 h-8 border border-sl-blue bg-sl-blue/10 flex items-center justify-center text-sl-blue text-xs hover:bg-sl-blue hover:text-sl-bg transition-colors">✓</button>
@@ -356,15 +481,16 @@ const Workout = () => {
                     </>
                   )}
                 </div>
-            ))}
-            <button onClick={() => {
-              addSet(exercise.id, { id: crypto.randomUUID().slice(0, 8), reps: '', weight: 0, rpe: 8, completed: false });
-            }} className="w-full mt-4 border border-dashed border-sl-border text-sl-text-dim py-2 font-share text-xs tracking-widest hover:text-white hover:border-sl-text-dim transition-colors">
-              + ADD SET
-            </button>
+              ))}
+              <button onClick={() => {
+                addSet(exercise.id, { id: crypto.randomUUID().slice(0, 8), reps: '', weight: 0, rpe: 8, completed: false, isSuccess: false });
+              }} className="w-full mt-4 border border-dashed border-sl-border text-sl-text-dim py-2 font-share text-xs tracking-widest hover:text-white hover:border-sl-text-dim transition-colors">
+                + ADD SET
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <button onClick={() => setShowAddExercise(true)}
         className="w-full bg-sl-surface border border-dashed border-sl-border-strong text-sl-text-dim py-4 hover:border-sl-blue hover:text-sl-blue transition-colors font-share tracking-widest mt-4">
